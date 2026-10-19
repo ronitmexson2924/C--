@@ -1,0 +1,17 @@
+{
+  "iconDefinitions": {
+    "_cmm_file": {
+      "iconPath": "./cmm-icon.png"
+    },
+    "_file": {
+      "iconPath": "./cmm-icon.png"
+    }
+  },
+  "file": "_file",
+  "fileExtensions": {
+    "cmm": "_cmm_file"
+  },
+  "languageIds": {
+    "cmm": "_cmm_file"
+  }
+}

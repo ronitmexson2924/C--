@@ -1,0 +1,14 @@
+Windows Registry Editor Version 5.00
+
+; File association and custom icon for C-- (.cmm) files on Windows
+[HKEY_CURRENT_USER\Software\Classes\.cmm]
+@="CMM_Source_File"
+
+[HKEY_CURRENT_USER\Software\Classes\CMM_Source_File]
+@="C-- Source File"
+
+[HKEY_CURRENT_USER\Software\Classes\CMM_Source_File\DefaultIcon]
+@="\"%LOCALAPPDATA%\\cmm\\cmm.ico\""
+
+[HKEY_CURRENT_USER\Software\Classes\CMM_Source_File\shell\open\command]
+@="\"cmm\" \"run\" \"%1\""

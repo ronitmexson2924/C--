@@ -463,6 +463,38 @@ Entries are listed in chronological order. Each entry details the timestamp, tas
 
 ---
 
+### [2026-10-19 22:58] — C-- Visual Identity, Custom File Icon Generation, and On-Save Association
+- **Task**: Integrate user's uploaded 3D blue C-- logo so that saving any `.cmm` file displays this logo as its icon in Finder / file explorer and within the IDE.
+- **Action Type**: Visual Branding, OS Integration, and Tooling.
+- **Files Created**:
+  - [`assets/logo.png`](./assets/logo.png) (Official high-res 1024x1007 C-- 3D logo)
+  - [`assets/cmm.icns`](./assets/cmm.icns) (Multi-resolution macOS icon bundle from 16x16 to 1024x1024)
+  - [`assets/cmm.ico`](./assets/cmm.ico) (Multi-resolution Windows icon from 16x16 to 256x256)
+  - [`assets/cmm-icon.png`](./assets/cmm-icon.png) (IDE file explorer icon)
+  - [`assets/register_cmm_windows.reg`](./assets/register_cmm_windows.reg) (Windows Registry file association)
+  - [`assets/cmm.xml`](./assets/cmm.xml) (Linux FreeDesktop MIME specification)
+  - [`scripts/set_cmm_icon.py`](./scripts/set_cmm_icon.py) (Cocoa-based icon stamper utility for .cmm files)
+  - [`scripts/watch_cmm_icons.py`](./scripts/watch_cmm_icons.py) (Background file watcher that stamps the logo whenever a .cmm file is saved)
+  - [`scripts/install_macos_association.sh`](./scripts/install_macos_association.sh) (Registers C--.app and cmm.icns with macOS LaunchServices)
+  - [`extensions/cmm-lang/`](./extensions/cmm-lang/) (VS Code and Antigravity IDE extension with custom file icons, syntax highlighting, and onDidSaveTextDocument hook)
+- **Files Modified**:
+  - [`README.md`](./README.md) (Added hero logo image, new Section 10 for File Icons & IDE Integration, and updated repository layout)
+  - [`memory.md`](./memory.md) (Logged iteration actions, test execution, and verification)
+- **Summary of Changes**:
+  - Processed uploaded 3D hexagonal C-- logo into `.icns`, `.ico`, and sized PNGs.
+  - Stamped custom icon onto all 29 `.cmm` files in the workspace using macOS Cocoa `NSWorkspace`.
+  - Built and registered `~/Applications/C--.app` with macOS LaunchServices to associate `.cmm` files system-wide.
+  - Built full IDE extension in `extensions/cmm-lang/` and installed it into `~/.antigravity-ide/extensions/` and `~/.vscode/extensions/`.
+  - Verified on-save hook stamps the icon immediately when saving `.cmm` files.
+- **Tests Executed**:
+  - `python3 scripts/set_cmm_icon.py demo.cmm` -> Applied C-- logo successfully.
+  - `./scripts/install_macos_association.sh` -> Registered with LaunchServices and stamped 29 files.
+  - `pytest -q` -> 290 passed in 11.20s.
+- **Spec Ambiguities / Questions**: None.
+- **Status**: Completed.
+
+---
+
 ## 5. Log Entry Template for Future Tasks
 
 When adding entries to Section 4, use the following format:
@@ -483,6 +515,7 @@ When adding entries to Section 4, use the following format:
   - <Any ambiguities encountered, or "None">
 - **Status**: <Completed / In Progress / Blocked>
 ```
+
 
 
 

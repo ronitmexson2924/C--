@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo.png" width="180" alt="C-- Language Logo" />
+
 # C-- (C Minus Minus)
 
 **A high-assurance, statically checked imperative programming language designed on the principle of *"Safety by Removal"* — version 0.1.0.**
@@ -19,7 +21,8 @@
 [Error Rectification](#6-compiler-diagnostics--error-rectification) •
 [C99 Backend](#7-c99-transpiler-backend) •
 [Security & Hardening](#8-security-audit--zero-vulnerability-guarantee) •
-[Testing](#9-testing--quality-assurance)
+[Testing](#9-testing--quality-assurance) •
+[File Icons & IDE](#10-file-icons--ide-integration-cmm-association)
 
 ---
 
@@ -421,10 +424,92 @@ pytest -v
 
 ---
 
-## 10. Repository Architecture & Layout
+## 10. File Icons & IDE Integration (.cmm Association)
+
+<div align="center">
+<img src="assets/logo.png" width="120" alt="C-- 3D Logo" />
+</div>
+
+C-- includes complete visual branding and system file icon associations so that whenever a `.cmm` file is saved or viewed in your file manager or code editor, it automatically displays the official **3D blue C-- hexagonal logo**.
+
+### A. macOS Finder Integration
+
+C-- provides seamless integration with macOS LaunchServices and Finder:
+
+1. **System-wide File Association**:
+   Run the setup script once to register the C-- Application bundle (`C--.app`) and `.icns` file icon with macOS LaunchServices:
+   ```bash
+   ./scripts/install_macos_association.sh
+   ```
+   After registration, macOS automatically associates all `*.cmm` files system-wide with the C-- 3D logo icon.
+
+2. **Stamp Icon on Any File or Directory**:
+   To manually stamp the C-- logo onto an existing `.cmm` file or recursively across a folder:
+   ```bash
+   # Stamp a single file
+   python scripts/set_cmm_icon.py path/to/file.cmm
+
+   # Stamp all .cmm files in the current workspace
+   python scripts/set_cmm_icon.py .
+   ```
+
+3. **Automatic On-Save Watcher**:
+   Keep the background watcher running to automatically stamp the C-- logo onto any `.cmm` file the moment you save it:
+   ```bash
+   python scripts/watch_cmm_icons.py .
+   ```
+
+---
+
+### B. VS Code & Antigravity IDE Extension
+
+A dedicated language and icon extension is located in [`extensions/cmm-lang/`](./extensions/cmm-lang):
+
+- **Custom File Icon**: Shows the 3D C-- logo next to every `.cmm` file in the file explorer and tab bar.
+- **Syntax Highlighting**: Comprehensive TextMate grammar highlighting keywords (`let`, `mut`, `fn`, `module`, `print`), types (`int`, `float`, `bool`, `string`), numbers, strings, and comments.
+- **Automatic Stamp on Save**: Hooks into `onDidSaveTextDocument` to immediately update the file's Finder icon whenever `Cmd+S` (Save) is pressed.
+
+To install into your local editor:
+```bash
+# Antigravity IDE
+cp -r extensions/cmm-lang ~/.antigravity-ide/extensions/ronitmexson.cmm-lang-0.1.0/
+
+# VS Code
+cp -r extensions/cmm-lang ~/.vscode/extensions/ronitmexson.cmm-lang-0.1.0/
+```
+
+---
+
+### C. Windows Explorer Association
+
+Register `.cmm` files to display the high-resolution `assets/cmm.ico` icon in Windows Explorer:
+1. Double-click or import [`assets/register_cmm_windows.reg`](./assets/register_cmm_windows.reg).
+2. Windows Explorer will immediately associate `.cmm` files with the C-- icon and register `cmm run` as the default execution command.
+
+---
+
+### D. Linux FreeDesktop MIME Type
+
+Install the C-- MIME type and icon for GNOME/KDE file managers:
+```bash
+mkdir -p ~/.local/share/mime/packages
+cp assets/cmm.xml ~/.local/share/mime/packages/
+update-mime-database ~/.local/share/mime
+```
+
+---
+
+## 11. Repository Architecture & Layout
 
 ```text
 compiler-mini-project/
+├── assets/                      # Visual branding and platform icon assets
+│   ├── logo.png                 # Official 3D C-- logo (1024x1007)
+│   ├── cmm.icns                 # Native macOS multi-resolution icon bundle
+│   ├── cmm.ico                  # Native Windows multi-resolution icon
+│   ├── cmm-icon.png             # IDE file explorer icon (128x128)
+│   ├── register_cmm_windows.reg # Windows Explorer file association
+│   └── cmm.xml                  # Linux FreeDesktop MIME specification
 ├── cmm/                         # Core compiler & interpreter implementation
 │   ├── __init__.py              # Package metadata (__version__ = "0.1.0")
 │   ├── __main__.py              # CLI entry point (python -m cmm)
@@ -453,9 +538,14 @@ compiler-mini-project/
 │   ├── floats.cmm               # Float formatting & edge cases
 │   └── errors/                  # Negative test cases (.cmm, .err, .code)
 ├── demo.cmm                     # Full 10-feature language showcase program
-├── scripts/                     # Packaging scripts
+├── extensions/                  # IDE extensions
+│   └── cmm-lang/                # VS Code & Antigravity IDE language & icon extension
+├── scripts/                     # Tooling & packaging scripts
 │   ├── entry.py                 # PyInstaller entry wrapper
-│   └── build_executable.py      # Standalone binary builder
+│   ├── build_executable.py      # Standalone binary builder
+│   ├── set_cmm_icon.py          # File icon stamper utility
+│   ├── watch_cmm_icons.py       # Background on-save icon watcher
+│   └── install_macos_association.sh # macOS LaunchServices installer
 ├── tests/                       # Complete pytest test suite (290 tests)
 ├── .github/workflows/ci.yml     # Multi-platform CI pipeline (Ubuntu, Windows, macOS)
 ├── Dockerfile                   # Docker container specification
@@ -463,6 +553,8 @@ compiler-mini-project/
 ├── LICENSE                      # MIT License
 └── README.md                    # Project documentation
 ```
+
+---
 
 ## 12. Specification & Documentation
 
