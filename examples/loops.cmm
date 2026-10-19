@@ -1,0 +1,20 @@
+module main;
+fn main() {
+    mut sum = 0;
+    for (mut i = 1; i <= 5; i += 1) {
+        sum += i;
+    }
+    print(sum);
+
+    mut n = 3;
+    while (n > 0) {
+        print(n);
+        n -= 1;
+    }
+
+    mut k = 10;
+    do {
+        print(k);
+        k += 1;
+    } while (k < 10);
+}

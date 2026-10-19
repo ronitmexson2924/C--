@@ -1,0 +1,3 @@
+semantic_assign_wrong_type.cmm:4:5: semantic error: cannot assign value of type float to variable 'i' of type int
+        i += 0.5;
+        ^

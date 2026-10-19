@@ -1,0 +1,5 @@
+module main;
+fn main() {
+    let d = 0;
+    print(10 / d);
+}

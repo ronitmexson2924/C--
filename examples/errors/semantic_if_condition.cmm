@@ -1,0 +1,4 @@
+module main;
+fn main() {
+    if (1) {}
+}

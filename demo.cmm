@@ -1,0 +1,158 @@
+// ============================================================================
+// C-- Comprehensive Language Showcase & Self-Test Program
+// ============================================================================
+// This program exercises all core features of C-- (version 0.1.0):
+// - Types: int (64-bit), float (64-bit double), bool, string
+// - Variables: immutable 'let' and mutable 'mut'
+// - Lexical scoping and inner block shadowing
+// - Arithmetic: +, -, *, /, % (with truncating division & C99 modulo)
+// - Mixed int/float automatic widening
+// - Comparison operators: <, <=, >, >=, ==, !=
+// - Logical operators: &&, ||, ! (with short-circuiting)
+// - Control flow: if / else if / else
+// - Loops: while, do-while, and for
+// - Output formatting via print(...)
+// ============================================================================
+
+module main;
+
+fn main() {
+    /* ----------------------------------------------------
+       1. Basic Types & Output
+       ---------------------------------------------------- */
+    print("--- 1. Basic Types & Output ---");
+    let msg = "Hello from C--!";
+    let answer = 42;
+    let pi_approx = 3.14159;
+    let is_ready = true;
+
+    print(msg);
+    print(answer);
+    print(pi_approx);
+    print(is_ready);
+
+    /* ----------------------------------------------------
+       2. Integer Arithmetic & 64-bit Boundary Handling
+       ---------------------------------------------------- */
+    print("--- 2. Integer Arithmetic ---");
+    let sum = 100 + 200;
+    let diff = 50 - 80;
+    let prod = 12 * 12;
+    let div_pos = 7 / 2;     // Truncating division towards zero -> 3
+    let div_neg = -7 / 2;    // Truncates towards zero -> -3
+    let mod_pos = 7 % 3;     // Remainder with dividend sign -> 1
+    let mod_neg = -7 % 3;    // Remainder with dividend sign -> -1
+
+    print(sum);
+    print(diff);
+    print(prod);
+    print(div_pos);
+    print(div_neg);
+    print(mod_pos);
+    print(mod_neg);
+
+    /* ----------------------------------------------------
+       3. Floats, Mixed Arithmetic & §9.1 Formatting
+       ---------------------------------------------------- */
+    print("--- 3. Floats & Mixed Operations ---");
+    let f1 = 2.0;
+    let f2 = 0.1 + 0.2;       // IEEE-754 precision showcase
+    let f3 = 10 / 4.0;        // Mixed int / float -> 2.5
+    let f4 = 1.0 / 3.0;
+    let neg_zero = -0.0;
+
+    print(f1);
+    print(f2);
+    print(f3);
+    print(f4);
+    print(neg_zero);
+
+    /* ----------------------------------------------------
+       4. Booleans, Relational & Logical Operators
+       ---------------------------------------------------- */
+    print("--- 4. Comparisons & Logic ---");
+    print(10 < 20);
+    print(10 >= 10);
+    print(3 == 3.0);          // Mixed int/float equality -> true
+    print("apple" == "apple");
+    print("apple" != "banana");
+    print(!false);
+    print(true && (1 < 2));
+    print(false || true);
+
+    /* ----------------------------------------------------
+       5. Variable Mutability ('mut') & Compound Assignment
+       ---------------------------------------------------- */
+    print("--- 5. Mutability & Compound Assignment ---");
+    mut acc = 10;
+    acc += 5;
+    acc *= 2;
+    acc -= 6;
+    acc /= 4;
+    acc %= 5;
+    print(acc);
+
+    /* ----------------------------------------------------
+       6. Scoping & Variable Shadowing
+       ---------------------------------------------------- */
+    print("--- 6. Scoping & Shadowing ---");
+    let x = 100;
+    {
+        // Initializer evaluates in outer scope, then inner 'x' shadows
+        let x = x + 50;
+        print(x);             // Prints 150
+        {
+            let x = "shadowed as string";
+            print(x);
+        }
+        print(x);             // Prints 150
+    }
+    print(x);                 // Prints 100
+
+    /* ----------------------------------------------------
+       7. Conditional Branches (if / else if / else)
+       ---------------------------------------------------- */
+    print("--- 7. Conditionals ---");
+    mut score = 85;
+    if (score >= 90) {
+        print("Grade: A");
+    } else if (score >= 80) {
+        print("Grade: B");
+    } else if (score >= 70) {
+        print("Grade: C");
+    } else {
+        print("Grade: F");
+    }
+
+    /* ----------------------------------------------------
+       8. While Loop
+       ---------------------------------------------------- */
+    print("--- 8. While Loop ---");
+    mut countdown = 3;
+    while (countdown > 0) {
+        print(countdown);
+        countdown -= 1;
+    }
+
+    /* ----------------------------------------------------
+       9. Do-While Loop (runs at least once)
+       ---------------------------------------------------- */
+    print("--- 9. Do-While Loop ---");
+    mut ran = 0;
+    do {
+        ran += 1;
+        print("do-while executed");
+    } while (ran < 1);
+
+    /* ----------------------------------------------------
+       10. For Loop (Sum of 1 to 5)
+       ---------------------------------------------------- */
+    print("--- 10. For Loop ---");
+    mut total = 0;
+    for (mut i = 1; i <= 5; i += 1) {
+        total += i;
+    }
+    print(total);             // 1 + 2 + 3 + 4 + 5 = 15
+
+    print("--- All Showcase Tests Passed Successfully! ---");
+}

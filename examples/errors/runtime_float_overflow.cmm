@@ -1,0 +1,4 @@
+module main;
+fn main() {
+    print(1.0e308 * 10.0);
+}

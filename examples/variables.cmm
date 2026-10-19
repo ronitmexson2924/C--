@@ -1,0 +1,16 @@
+module main;
+fn main() {
+    let a = 5;
+    mut b = a;
+    b = b + 1;
+    print(a);
+    print(b);
+    {
+        let a = "inner";
+        print(a);
+    }
+    print(a);
+    let s = "hi";
+    print(s == "hi");
+    print(s != "ho");
+}

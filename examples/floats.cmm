@@ -1,0 +1,11 @@
+module main;
+fn main() {
+    print(2.0);
+    print(0.1 + 0.2);
+    print(1.0 / 3.0);
+    print(1000000.0 * 10000000000.0);
+    print(0.00001);
+    print(-0.0);
+    print(5 / 2.0);
+    print(100.0);
+}

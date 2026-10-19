@@ -1,0 +1,9 @@
+semantic_multiple.cmm:4:5: semantic error: cannot assign to immutable variable 'a' (declared with 'let' at line 3, column 9); declare it with 'mut' to allow assignment
+        a = 2;
+        ^
+semantic_multiple.cmm:5:5: semantic error: undeclared variable 'b'
+        b = 3;
+        ^
+semantic_multiple.cmm:6:15: semantic error: operator '+' cannot be applied to int and string
+        let c = a + "x";
+                  ^

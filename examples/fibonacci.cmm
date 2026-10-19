@@ -1,0 +1,11 @@
+module main;
+fn main() {
+    mut a = 0;
+    mut b = 1;
+    for (mut i = 0; i < 10; i += 1) {
+        print(a);
+        let next = a + b;
+        a = b;
+        b = next;
+    }
+}

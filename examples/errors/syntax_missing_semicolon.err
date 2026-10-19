@@ -1,0 +1,3 @@
+syntax_missing_semicolon.cmm:4:5: syntax error: expected ';', found 'print'
+        print(x);
+        ^

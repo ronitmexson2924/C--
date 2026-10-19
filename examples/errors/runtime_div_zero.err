@@ -1,0 +1,3 @@
+runtime_div_zero.cmm:4:14: runtime error: division by zero
+        print(10 / d);
+                 ^

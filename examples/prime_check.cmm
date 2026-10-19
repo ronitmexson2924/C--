@@ -1,0 +1,16 @@
+module main;
+fn main() {
+    for (mut n = 2; n <= 20; n += 1) {
+        mut is_prime = true;
+        mut d = 2;
+        while (d * d <= n) {
+            if (n % d == 0) {
+                is_prime = false;
+            }
+            d += 1;
+        }
+        if (is_prime) {
+            print(n);
+        }
+    }
+}

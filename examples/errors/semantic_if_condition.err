@@ -1,0 +1,3 @@
+semantic_if_condition.cmm:3:9: semantic error: condition must be of type bool, found int
+        if (1) {}
+            ^

@@ -1,0 +1,3 @@
+semantic_condition.cmm:4:12: semantic error: condition must be of type bool, found int
+        while (i) {
+               ^

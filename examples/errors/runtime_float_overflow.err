@@ -1,0 +1,3 @@
+runtime_float_overflow.cmm:3:19: runtime error: float overflow
+        print(1.0e308 * 10.0);
+                      ^
