@@ -558,7 +558,8 @@ compiler-mini-project/
 
 ## 12. Specification & Documentation
 
-The complete, authoritative definition of the C-- language is located at [`docs/SPEC.md`](docs/SPEC.md).
+- 📘 **[Language Guide & Programmer's Manual](docs/LANGUAGE_GUIDE.md)**: Practical reference guide covering syntax, operators, control flow, diagnostics, and idiomatic code recipes.
+- 📜 **[Normative Specification (SPEC.md)](docs/SPEC.md)**: The authoritative, character-exact specification of the C-- language grammar, semantics, and reference requirements.
 
 ---
 
