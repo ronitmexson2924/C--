@@ -464,28 +464,6 @@ compiler-mini-project/
 └── README.md                    # Project documentation
 ```
 
----
-
-## 11. Publishing to GitHub
-
-To publish this repository or push new changes to GitHub:
-
-```bash
-# 1. Inspect git status to ensure working directory is clean
-git status
-
-# 2. Stage all project files
-git add .
-
-# 3. Commit with a clear, descriptive message
-git commit -m "feat: complete C-- compiler, C99 backend, hardened security, and docs"
-
-# 4. Push to your GitHub repository
-git push origin main
-```
-
----
-
 ## 12. Specification & Documentation
 
 The complete, authoritative definition of the C-- language is located at [`docs/SPEC.md`](docs/SPEC.md).
