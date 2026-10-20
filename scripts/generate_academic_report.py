@@ -320,6 +320,55 @@ p {
     font-size: 9pt;
 }
 
+.cover-resources-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 14px auto 0 auto;
+    max-width: 720px;
+    text-align: left;
+}
+
+.resource-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.resource-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.github-badge {
+    background-color: #0f172a;
+    color: #ffffff;
+}
+
+.live-badge {
+    background-color: #16a34a;
+    color: #ffffff;
+}
+
+.resource-link {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: none;
+    word-break: break-all;
+}
+
 .cover-footer {
     border-top: 1px solid #e2e8f0;
     padding-top: 12px;
@@ -618,11 +667,11 @@ table.academic-table tr:last-child td {
                     </div>
                     <div class="team-member">
                         <span class="member-name">Mit Kumar Raju Panchal</span>
-                        <span class="member-reg">24BAI0279</span>
+                        <span class="member-reg">24BAU0279</span>
                     </div>
                     <div class="team-member">
                         <span class="member-name">Garv Gupta</span>
-                        <span class="member-reg">24BDS0169</span>
+                        <span class="member-reg">24BAI0169</span>
                     </div>
                 </div>
                 <div class="meta-label" style="margin-top: 12px;">Student School</div>
@@ -643,14 +692,25 @@ table.academic-table tr:last-child td {
                 <div class="meta-value">v0.2.0 (Production Specification)</div>
                 
                 <div class="meta-label" style="margin-top: 10px;">Verification Status</div>
-                <div class="meta-value" style="color: #059669;">416 / 416 Automated Tests Passing (100%)</div>
+                <div class="meta-value" style="color: #059669;">417 / 417 Automated Tests Passing (100%)</div>
+            </div>
+        </div>
+
+        <div class="cover-resources-card">
+            <div class="resource-row">
+                <span class="resource-badge github-badge">GitHub Repository</span>
+                <a href="https://github.com/ronitmexson2924/C--" class="resource-link" target="_blank">https://github.com/ronitmexson2924/C--</a>
+            </div>
+            <div class="resource-row">
+                <span class="resource-badge live-badge">Live Web Studio</span>
+                <a href="https://web-production-c8ddc.up.railway.app" class="resource-link" target="_blank">https://web-production-c8ddc.up.railway.app</a>
             </div>
         </div>
     </div>
     
     <div class="cover-footer">
-        <div>School of Computer Science and Engineering (SCOPE) &bull; Repository: <code>compiler-mini-project</code></div>
-        <div>Date of Formal Submission: October 2026</div>
+        <div>School of Computer Science and Engineering (SCOPE) &bull; GitHub: <code>https://github.com/ronitmexson2924/C--</code></div>
+        <div>Live Deployment: <code>https://web-production-c8ddc.up.railway.app</code> &bull; October 2026</div>
     </div>
 </div>
 
@@ -668,7 +728,7 @@ table.academic-table tr:last-child td {
         This paper introduces <strong>C-- (C Minus Minus)</strong>, a high-assurance imperative programming language engineered around the paradigm of <em>"Safety by Removal."</em> By surgically eliminating raw pointers, nullable references, implicit type conversions, and uninitialized variables at language design time, C-- provides mathematical memory safety without the cognitive burden of Rust's borrow checker or the runtime latency of a garbage collector.
     </p>
     <p>
-        The complete compiler pipeline—implemented in Python—features an LL(k) recursive-descent parser with precedence climbing, strict semantic scoping, a reference tree-walking interpreter with deep-copy value semantics, and an ISO C99 code generator emitting hardened native code. Furthermore, C-- pioneers pedagogical developer tooling through a 60-code diagnostic taxonomy providing 3-line source gutters, root-cause explanations, and Levenshtein-distance typo suggestions. The implementation is verified across 416 automated test suites with a 100% pass rate.
+        The complete compiler pipeline—implemented in Python—features an LL(k) recursive-descent parser with precedence climbing, strict semantic scoping, a reference tree-walking interpreter with deep-copy value semantics, and an ISO C99 code generator emitting hardened native code. Furthermore, C-- pioneers pedagogical developer tooling through a 60-code diagnostic taxonomy providing 3-line source gutters, root-cause explanations, and Levenshtein-distance typo suggestions. The implementation is verified across 417 automated test suites with a 100% pass rate.
     </p>
     <div class="keywords">
         <strong>ACM CCS Terms:</strong> Software and its engineering &rarr; Compilers; Language features; Source code generation; Software defect analysis; Software safety.
@@ -909,8 +969,18 @@ table.academic-table tr:last-child td {
     <li><strong>Exhaustive Semantic Analysis:</strong> To build a hierarchical symbol table resolving variable declarations, strict mutability tracking (<code>let</code> vs <code>mut</code>), type consistency, and exhaustive return paths.</li>
     <li><strong>Dual Execution Backends:</strong> To deliver both a high-fidelity reference AST tree-walking interpreter and an optimizing C99 transpiler that outputs hardened, portable C source code.</li>
     <li><strong>Pedagogical Diagnostics:</strong> To introduce human-centric compiler error reporting with an ANSI source gutter, "What went wrong", "How to fix", and fuzzy typo correction.</li>
-    <li><strong>Empirical Verification:</strong> To validate the compiler against 416 automated test cases with 100% code correctness.</li>
+    <li><strong>Interactive Web Studio &amp; Explorer:</strong> To provide a zero-installation, browser-based compiler studio allowing immediate code experimentation, AST visualization, token inspection, and live C99 transpilation.</li>
+    <li><strong>Empirical Verification:</strong> To validate the compiler against 417 automated test cases with 100% code correctness.</li>
 </ol>
+
+<div class="tip-box" style="margin-top: 15px;">
+    <strong>Verified Project Deliverables &amp; Online Resources:</strong>
+    <ul style="margin: 6px 0 0 18px; padding: 0; line-height: 1.6;">
+        <li><strong>Open-Source Repository:</strong> <a href="https://github.com/ronitmexson2924/C--" target="_blank">https://github.com/ronitmexson2924/C--</a></li>
+        <li><strong>Live Cloud Deployment &amp; Web Studio:</strong> <a href="https://web-production-c8ddc.up.railway.app" target="_blank">https://web-production-c8ddc.up.railway.app</a></li>
+        <li><strong>Automated Test Suite:</strong> 417 passing test cases verifying 100% specification compliance.</li>
+    </ul>
+</div>
 
 <div class="page-break"></div>
 
@@ -1575,8 +1645,16 @@ Countdown: 3, 2, 1 | Sum 1 to 5: 15<br>
     The C-- programming language demonstrates that memory safety and procedural simplicity are not mutually exclusive. By applying the principle of <em>"Safety by Removal,"</em> C-- eliminates the historical vulnerabilities of C—including buffer overflows, null pointer dereferences, and dangling references—without requiring complex ownership lifespans or garbage collection.
 </p>
 <p>
-    Backed by a complete multi-pass compiler pipeline, an optimizing ISO C99 code generator, pedagogical diagnostics with Levenshtein typo suggestion, and a 100% verified 416-test suite, C-- serves as both an exemplary educational compiler and a resilient foundation for safe systems programming.
+    Backed by a complete multi-pass compiler pipeline, an optimizing ISO C99 code generator, pedagogical diagnostics with Levenshtein typo suggestion, and a 100% verified 417-test suite, C-- serves as both an exemplary educational compiler and a resilient foundation for safe systems programming.
 </p>
+
+<div class="note-box" style="margin-top: 14px; margin-bottom: 18px;">
+    <strong>Open-Source Project Repository &amp; Live Deployment Links:</strong>
+    <ul style="margin: 6px 0 0 18px; padding: 0; line-height: 1.6;">
+        <li><strong>GitHub Source Code:</strong> <a href="https://github.com/ronitmexson2924/C--" target="_blank">https://github.com/ronitmexson2924/C--</a></li>
+        <li><strong>Live Interactive Web Studio &amp; Compiler Explorer:</strong> <a href="https://web-production-c8ddc.up.railway.app" target="_blank">https://web-production-c8ddc.up.railway.app</a></li>
+    </ul>
+</div>
 
 <h2 class="section-title">Academic References &amp; Bibliography</h2>
 <ol style="font-size: 8.5pt; line-height: 1.5; color: #475569;">

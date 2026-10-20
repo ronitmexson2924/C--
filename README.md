@@ -6,7 +6,8 @@
 
 **A high-assurance, statically checked imperative programming language designed on the principle of *"Safety by Removal"* — version 0.2.0.**
 
-[![CI Matrix](https://github.com/ronitmexson2924/compiler-mini-project/actions/workflows/ci.yml/badge.svg)](https://github.com/ronitmexson2924/compiler-mini-project/actions)
+[![CI Matrix](https://github.com/ronitmexson2924/C--/actions/workflows/ci.yml/badge.svg)](https://github.com/ronitmexson2924/C--/actions)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway%20Cloud-success.svg)](https://web-production-c8ddc.up.railway.app)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Zero Runtime Dependencies](https://img.shields.io/badge/dependencies-0%20external-brightgreen.svg)](#prerequisites)
@@ -66,7 +67,11 @@
 
 C-- includes a zero-dependency web playground and interactive compiler explorer (`web/server.py`). Users can test language features, write code, inspect AST/tokens, run code in the reference interpreter, and transpile C-- directly into ISO C99 code through a split-screen browser interface with a top navigation bar.
 
-### Launching the Web Studio
+### Live Online Playground
+Try C-- directly in your browser without local installation:  
+🌐 **[Open Live Web Studio (Hosted on Railway)](https://web-production-c8ddc.up.railway.app)**
+
+### Launching Locally
 ```bash
 python3 web/server.py
 ```
@@ -77,7 +82,7 @@ Open **`http://localhost:8000`** in any web browser.
 - **Split-Screen Studio:** Line-numbered code editor on the left; real-time execution output console & C99 transpiled code viewer on the right.
 - **One-Click Transpilation:** Click **"⚙ Transpile to C"** to transpose the active C-- code into hardened ISO C99.
 - **Preset Library:** 7 preloaded examples covering recursion, lists, stacks/queues, value semantics, switch-case, C99 transpilation, and typo diagnostics.
-- **Academic PDF Report:** Download or view the comprehensive 22-page academic report right from the top header bar.
+- **Academic PDF Report:** Download or view the comprehensive academic report right from the top header bar.
 
 ---
 
@@ -109,8 +114,8 @@ Installing C-- into a dedicated virtual environment ensures a clean environment 
 #### macOS / Linux
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ronitmexson2924/compiler-mini-project.git
-cd compiler-mini-project
+git clone https://github.com/ronitmexson2924/C--.git
+cd C--
 
 # 2. Create and activate a virtual environment
 python3 -m venv .venv
@@ -123,8 +128,8 @@ pip install -e .
 #### Windows (PowerShell)
 ```powershell
 # 1. Clone the repository
-git clone https://github.com/ronitmexson2924/compiler-mini-project.git
-cd compiler-mini-project
+git clone https://github.com/ronitmexson2924/C--.git
+cd C--
 
 # 2. Create and activate a virtual environment
 py -m venv .venv
@@ -137,8 +142,8 @@ pip install -e .
 #### Windows (Command Prompt `cmd.exe`)
 ```cmd
 REM 1. Clone the repository
-git clone https://github.com/ronitmexson2924/compiler-mini-project.git
-cd compiler-mini-project
+git clone https://github.com/ronitmexson2924/C--.git
+cd C--
 
 REM 2. Create and activate a virtual environment
 py -m venv .venv
