@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from cmm.ast_nodes import (
     ASTNode,
@@ -329,6 +329,34 @@ HELPER_DEFS: dict[str, str] = {
     printf("%s\n", out);
 }
 """,
+    "cmm_parse_int": r"""static int64_t cmm_parse_int(const char *s, int line, int col) {
+    if (!s || *s == '\0') cmm_runtime_error("invalid integer format in parse_int()", line, col);
+    char *endptr;
+    long long val = strtoll(s, &endptr, 10);
+    if (*endptr != '\0') cmm_runtime_error("invalid integer format in parse_int()", line, col);
+    return (int64_t)val;
+}
+""",
+    "cmm_parse_float": r"""static double cmm_parse_float(const char *s, int line, int col) {
+    if (!s || *s == '\0') cmm_runtime_error("invalid float format in parse_float()", line, col);
+    char *endptr;
+    double val = strtod(s, &endptr);
+    if (*endptr != '\0') cmm_runtime_error("invalid float format in parse_float()", line, col);
+    return val;
+}
+""",
+    "cmm_input": r"""static const char * cmm_input(int line, int col) {
+    char buf[4096];
+    if (!fgets(buf, sizeof(buf), stdin)) {
+        cmm_runtime_error("unexpected end of file reading stdin", line, col);
+    }
+    size_t len = strlen(buf);
+    if (len > 0 && buf[len - 1] == '\n') buf[len - 1] = '\0';
+    char *res = (char *)malloc(len + 1);
+    if (res) strcpy(res, buf);
+    return res;
+}
+""",
 }
 
 ARITHMETIC_HELPERS = {
@@ -343,6 +371,9 @@ ARITHMETIC_HELPERS = {
     "cmm_fmul",
     "cmm_fdiv",
     "cmm_fneg",
+    "cmm_parse_int",
+    "cmm_parse_float",
+    "cmm_input",
 }
 
 
@@ -355,6 +386,8 @@ class CCodegen:
         self._scopes: list[dict[str, CVar]] = []
         self._var_counter = 0
         self._used_helpers: set[str] = set()
+        self._functions: dict[str, Any] = {}
+        self._current_function: Optional[str] = None
 
     def _push_scope(self) -> None:
         self._scopes.append({})
@@ -371,9 +404,11 @@ class CCodegen:
     def _declare(self, name: str, cvar: CVar) -> None:
         self._scopes[-1][name] = cvar
 
-    def c_type(self, t: Type, is_const: bool = False) -> str:
+    def c_type(self, t: Optional[Type], is_const: bool = False) -> str:
         """Return C99 type string for a C-- type."""
-        if t == Type.INT:
+        if t is None or t == Type.VOID:
+            return "void"
+        elif t == Type.INT:
             return "const int64_t" if is_const else "int64_t"
         elif t == Type.FLOAT:
             return "const double" if is_const else "double"
@@ -490,6 +525,32 @@ class CCodegen:
                 return res_t, f"(({l_code}) {expr.op} ({r_code}))"
 
             raise ValueError(f"Unknown binary operator: {expr.op}")
+
+        elif isinstance(expr, Call):
+            arg_codes: list[str] = []
+            for arg in expr.args:
+                _, a_code = self.gen_expr(arg)
+                arg_codes.append(a_code)
+            args_str = ", ".join(arg_codes)
+
+            if expr.name in self._functions:
+                fn_def = self._functions[expr.name]
+                ret_t = fn_def.ret_type if fn_def.ret_type is not None else Type.VOID
+                return ret_t, f"_cmm_{expr.name}({args_str})"
+
+            elif expr.name == "parse_int":
+                self._used_helpers.add("cmm_parse_int")
+                return Type.INT, f"cmm_parse_int({args_str}, {expr.line}, {expr.col})"
+
+            elif expr.name == "parse_float":
+                self._used_helpers.add("cmm_parse_float")
+                return Type.FLOAT, f"cmm_parse_float({args_str}, {expr.line}, {expr.col})"
+
+            elif expr.name == "input":
+                self._used_helpers.add("cmm_input")
+                return Type.STRING, f"cmm_input({expr.line}, {expr.col})"
+
+            raise TranspileError("T001", f"C backend does not support function '{expr.name}'", expr.line, expr.col)
 
         raise TypeError(f"Unknown expression node type: {type(expr)}")
 
@@ -613,6 +674,24 @@ class CCodegen:
             lines.append("}")
             return lines
 
+        elif isinstance(stmt, ReturnStmt):
+            if self._current_function == "main":
+                if stmt.expr is not None:
+                    _, val_code = self.gen_expr(stmt.expr)
+                    return [f"return (int)({val_code});"]
+                return ["return 0;"]
+            else:
+                if stmt.expr is not None:
+                    _, val_code = self.gen_expr(stmt.expr)
+                    return [f"return {val_code};"]
+                return ["return;"]
+
+        elif isinstance(stmt, CallStmt):
+            if isinstance(stmt.call, Call):
+                _, call_code = self.gen_expr(stmt.call)
+                return [f"{call_code};"]
+            raise TranspileError("T001", "C backend does not support method calls", stmt.line, stmt.col)
+
         raise TypeError(f"Unknown statement node type: {type(stmt)}")
 
     def gen_block_body(self, block: Block) -> list[str]:
@@ -629,16 +708,9 @@ class CCodegen:
         return lines
 
     def _validate_v01_subset(self, program: Program) -> None:
-        """Reject v0.2-only features before C code generation per §A10."""
-        for fn in program.functions:
-            if fn.name != "main":
-                raise TranspileError("T001", f"C backend does not support user-defined functions other than 'main' ('{fn.name}')", fn.line, fn.col)
-
+        """Reject unsupported v0.2-only features before C code generation per §A10."""
         def walk(node: ASTNode) -> None:
-            if isinstance(node, (Call, CallStmt)):
-                name = node.name if isinstance(node, Call) else (node.call.name if isinstance(node.call, Call) else "call")
-                raise TranspileError("T001", f"C backend does not support function calls ('{name}')", node.line, node.col)
-            elif isinstance(node, MethodCall):
+            if isinstance(node, MethodCall):
                 raise TranspileError("T001", f"C backend does not support method calls ('.{node.method}')", node.line, node.col)
             elif isinstance(node, (Index, IndexAssign)):
                 raise TranspileError("T001", "C backend does not support indexing", node.line, node.col)
@@ -646,11 +718,16 @@ class CCodegen:
                 raise TranspileError("T001", "C backend does not support collections", node.line, node.col)
             elif isinstance(node, SwitchStmt):
                 raise TranspileError("T001", "C backend does not support 'switch' statements", node.line, node.col)
+            elif isinstance(node, Call):
+                for arg in node.args:
+                    walk(arg)
+            elif isinstance(node, CallStmt):
+                walk(node.call)
             elif isinstance(node, ReturnStmt):
-                raise TranspileError("T001", "C backend does not support 'return' in main", node.line, node.col)
+                if node.expr:
+                    walk(node.expr)
             elif isinstance(node, VarDecl):
                 walk(node.init)
-
             elif isinstance(node, Block):
                 for s in node.statements:
                     walk(s)
@@ -683,14 +760,56 @@ class CCodegen:
             elif isinstance(node, UnaryOp):
                 walk(node.operand)
 
-        walk(program.body)
+        for fn in program.functions:
+            walk(fn.body)
 
     def generate(self, program: Program) -> str:
         """Generate complete standard C99 source code."""
+        self._functions = {fn.name: fn for fn in program.functions}
         self._validate_v01_subset(program)
-        # First generate the main body statements so self._used_helpers is populated
-        body_lines = self.gen_block_body(program.body)
 
+        # Generate non-main user functions
+        fn_defs: list[str] = []
+        for fn in program.functions:
+            if fn.name == "main":
+                continue
+            self._current_function = fn.name
+            ret_t_str = self.c_type(fn.ret_type)
+            param_decls: list[str] = []
+
+            self._push_scope()
+            for p in fn.params:
+                self._var_counter += 1
+                c_pname = f"_p_{self._var_counter}_{p.name}"
+                param_decls.append(f"{self.c_type(p.type)} {c_pname}")
+                self._declare(p.name, CVar(c_pname, p.type, mutable=False))
+
+            p_str = ", ".join(param_decls) if param_decls else "void"
+            body_lines = self.gen_block_body(fn.body)
+            self._pop_scope()
+
+            fn_lines = [f"static {ret_t_str} _cmm_{fn.name}({p_str}) {{"]
+            fn_lines.extend(body_lines)
+            fn_lines.append("}\n")
+            fn_defs.append("\n".join(fn_lines))
+
+        # Generate main function
+        self._current_function = "main"
+        main_fn = next((f for f in program.functions if f.name == "main"), None)
+        if main_fn:
+            main_body_lines = self.gen_block_body(main_fn.body)
+        else:
+            main_body_lines = []
+
+        # Function prototypes
+        prototypes: list[str] = []
+        for fn in program.functions:
+            if fn.name == "main":
+                continue
+            ret_t_str = self.c_type(fn.ret_type)
+            param_types = [self.c_type(p.type) for p in fn.params]
+            p_str = ", ".join(param_types) if param_types else "void"
+            prototypes.append(f"static {ret_t_str} _cmm_{fn.name}({p_str});")
 
         parts: list[str] = [C_RUNTIME_HEADER]
 
@@ -714,9 +833,19 @@ class CCodegen:
             if helper_name in self._used_helpers:
                 parts.append(helper_code)
 
+        if prototypes:
+            parts.append("/* Function Prototypes */")
+            parts.extend(prototypes)
+            parts.append("")
+
+        if fn_defs:
+            parts.append("/* User Functions */")
+            parts.extend(fn_defs)
+
         # Main function
+        parts.append("/* Main Entry Point */")
         parts.append("int main(void) {")
-        for line in body_lines:
+        for line in main_body_lines:
             parts.append(line)
         parts.append("    return 0;")
         parts.append("}\n")

@@ -2,4 +2,7 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY . .
 RUN pip install --no-cache-dir .
-ENTRYPOINT ["cmm"]
+EXPOSE 8000
+ENV PORT=8000
+CMD ["python3", "web/server.py"]
+

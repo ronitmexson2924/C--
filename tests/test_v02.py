@@ -651,13 +651,14 @@ def test_io_parse_float() -> None:
 # 6. C Backend Rejection Tests (§A10)
 # ============================================================================
 
+def test_c_backend_supports_user_defined_functions() -> None:
+    # Multiple functions and recursion
+    src_funcs = "module test; fn foo(x: int) -> int { return x + 1; } fn main() { let r = foo(41); print(r); }"
+    c_code = generate_c(parse_src(src_funcs), "test.cmm", src_funcs.splitlines())
+    assert "_cmm_foo" in c_code
+    assert "return" in c_code
+
 def test_c_backend_rejects_v02_features() -> None:
-    # Multiple functions
-    src_funcs = "module test; fn foo() {} fn main() {}"
-    with pytest.raises(CmmError) as exc_info:
-        generate_c(parse_src(src_funcs), "test.cmm", src_funcs.splitlines())
-    assert exc_info.value.code == "T001"
-    assert "user-defined functions" in exc_info.value.message
 
     # Collections
     src_coll = "module test; fn main() { let a = [1, 2]; }"

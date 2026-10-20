@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-- Compiler Explorer &amp; Language Specification</title>
+    <meta name="description" content="Interactive compiler explorer, ISO C99 transpiler, and formal specification for C-- (C Minus Minus), a memory-safe imperative programming language.">
+    
+    <!-- Google Fonts: Inter & JetBrains Mono / Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- Top Navigation Bar -->
+    <header class="app-header" id="main-header">
+        <div class="header-left">
+            <div class="brand-logo-container">
+                <img src="/assets/cmm-icon-64.png" alt="C--" class="brand-logo" onerror="this.style.display='none'">
+                <div class="brand-text">
+                    <span class="brand-title">C<span class="brand-minus">--</span></span>
+                    <span class="brand-version">v0.2.0</span>
+                </div>
+            </div>
+            <span class="header-divider" aria-hidden="true">/</span>
+            <div class="header-tagline">Compiler Explorer</div>
+        </div>
+
+        <nav class="nav-tabs" id="nav-tabs" aria-label="Primary Navigation">
+            <button class="nav-tab active" data-tab="playground" id="tab-btn-playground">
+                Playground
+            </button>
+            <button class="nav-tab" data-tab="overview" id="tab-btn-overview">
+                Overview
+            </button>
+            <button class="nav-tab" data-tab="features" id="tab-btn-features">
+                Architecture
+            </button>
+            <button class="nav-tab" data-tab="pipeline" id="tab-btn-pipeline">
+                Pipeline
+            </button>
+            <button class="nav-tab" data-tab="syntax" id="tab-btn-syntax">
+                Reference
+            </button>
+        </nav>
+
+        <div class="header-right">
+            <div class="connection-status" id="connection-status" title="Compiler Backend Status">
+                <span class="status-dot online"></span>
+                <span class="status-label" id="status-label">Online</span>
+            </div>
+
+            <button class="icon-btn" id="btn-theme-toggle" title="Toggle color theme" aria-label="Toggle color theme">
+                <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                </svg>
+                <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+
+            <a href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener" class="doc-link-btn" title="Open Formal Language Specification (PDF)">
+                <span>Specification PDF</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 17L17 7M7 7h10v10"></path>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="app-container" id="main-container">
+
+        <!-- ================================================================
+             VIEW 1: PLAYGROUND & COMPILER STUDIO
+             ================================================================ -->
+        <section class="tab-view active" id="view-playground">
+            <!-- Playground Control Toolbar -->
+            <div class="playground-toolbar" id="playground-toolbar">
+                <div class="toolbar-left">
+                    <label for="preset-select" class="toolbar-label">Preset</label>
+                    <div class="select-wrapper">
+                        <select id="preset-select" class="preset-dropdown">
+                            <option value="factorial">01 &mdash; Factorial &amp; Recursion</option>
+                            <option value="collections">02 &mdash; Dynamic Lists &amp; Slices</option>
+                            <option value="stack_queue">03 &mdash; LIFO Stacks &amp; FIFO Queues</option>
+                            <option value="value_semantics">04 &mdash; Deep-Copy Value Semantics</option>
+                            <option value="switch_matching">05 &mdash; Switch-Case Matching</option>
+                            <option value="transpile_demo">06 &mdash; ISO C99 Transpilation</option>
+                            <option value="error_diagnostic">07 &mdash; Diagnostics &amp; Typo Recovery</option>
+                        </select>
+                    </div>
+                    <span class="preset-hint" id="preset-hint">Typed function declaration, pure recursion, and call stack safety.</span>
+                </div>
+
+                <div class="toolbar-right">
+                    <div class="action-group-primary">
+                        <button class="btn btn-primary" id="btn-run" title="Execute in C-- Reference Interpreter (Ctrl+Enter)">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                            </svg>
+                            <span>Run</span>
+                            <kbd class="btn-kbd">&#8984;&#9166;</kbd>
+                        </button>
+                        <button class="btn btn-secondary btn-transpile" id="btn-transpile" title="Transpile C-- AST to ISO C99 (Ctrl+Shift+Enter)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                            <span>Transpile C99</span>
+                        </button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <div class="action-group-inspect">
+                        <button class="btn btn-ghost" id="btn-check" title="Run static type &amp; scope analysis">
+                            Type Check
+                        </button>
+                        <button class="btn btn-ghost" id="btn-ast" title="Inspect Abstract Syntax Tree">
+                            AST
+                        </button>
+                        <button class="btn btn-ghost" id="btn-tokens" title="Inspect Lexer Token Stream">
+                            Tokens
+                        </button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <button class="btn btn-ghost btn-icon-only" id="btn-reset" title="Reset editor to selected preset">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                        </svg>
+                        <span>Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Split-Screen Editor & Output Studio -->
+            <div class="studio-split-pane" id="studio-split-pane">
+                <!-- Left Pane: Code Editor -->
+                <div class="studio-pane editor-pane" id="editor-pane">
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <svg class="pane-file-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span class="pane-filename">playground.cmm</span>
+                            <span class="badge badge-lang">UTF-8</span>
+                        </div>
+                        <div class="pane-meta">
+                            <span id="editor-line-col">Ln 1, Col 1</span>
+                            <span class="meta-divider">&middot;</span>
+                            <span id="editor-char-count">0 chars</span>
+                            <button class="pane-action-btn" id="btn-copy-source" title="Copy source code">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-wrapper" id="editor-wrapper">
+                        <div class="line-gutter" id="line-gutter" aria-hidden="true">1</div>
+                        <textarea id="code-editor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="// Enter C-- source code..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Interactive Split Resizer -->
+                <div class="pane-resizer" id="pane-resizer" title="Drag to resize panes" role="separator" aria-orientation="vertical"></div>
+
+                <!-- Right Pane: Output Console & Compiler Inspector -->
+                <div class="studio-pane output-pane" id="output-pane">
+                    <div class="pane-header output-header">
+                        <div class="output-tabs" id="output-tabs" role="tablist">
+                            <button class="output-tab active" data-output="console" id="out-tab-console" role="tab">
+                                Console
+                            </button>
+                            <button class="output-tab" data-output="c99" id="out-tab-c99" role="tab">
+                                C99 Output
+                            </button>
+                            <button class="output-tab" data-output="ast" id="out-tab-ast" role="tab">
+                                AST
+                            </button>
+                            <button class="output-tab" data-output="tokens" id="out-tab-tokens" role="tab">
+                                Tokens
+                            </button>
+                        </div>
+                        <div class="output-actions">
+                            <span class="status-pill status-ready" id="execution-status-pill">Ready</span>
+                            <button class="btn-copy" id="btn-copy-output" title="Copy active output to clipboard">
+                                Copy
+                            </button>
+                            <button class="btn-clear" id="btn-clear-output" title="Clear output console">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Content Views -->
+                    <div class="output-content-container" id="output-content-container">
+                        <!-- View A: Execution Console -->
+                        <div class="output-view active" id="output-view-console">
+                            <pre class="terminal-display" id="terminal-display"><span class="terminal-dim">// Press Run (Ctrl+Enter) to execute in the C-- reference interpreter.</span></pre>
+                        </div>
+
+                        <!-- View B: Transpiled C99 Code -->
+                        <div class="output-view" id="output-view-c99">
+                            <pre class="code-display" id="c99-display"><span class="terminal-dim">// Select "Transpile C99" to emit bounds-checked ISO C99 source.</span></pre>
+                        </div>
+
+                        <!-- View C: AST Representation -->
+                        <div class="output-view" id="output-view-ast">
+                            <pre class="code-display" id="ast-display"><span class="terminal-dim">// Select "AST" to inspect the typed Abstract Syntax Tree.</span></pre>
+                        </div>
+
+                        <!-- View D: Lexical Tokens -->
+                        <div class="output-view" id="output-view-tokens">
+                            <pre class="code-display" id="tokens-display"><span class="terminal-dim">// Select "Tokens" to inspect the lexical token stream.</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 2: OVERVIEW
+             ================================================================ -->
+        <section class="tab-view" id="view-overview">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">LANGUAGE SPECIFICATION &amp; RATIONALE</div>
+                    <h1 class="doc-title">C-- (C Minus Minus)</h1>
+                    <p class="doc-lead">
+                        An imperative systems programming language designed around <strong>Safety by Removal</strong>. 
+                        C-- retains the deterministic control flow and minimal runtime footprint of ISO C while eliminating 
+                        entire classes of memory-corruption vulnerabilities at the grammar level.
+                    </p>
+                </div>
+
+                <div class="spec-comparison-grid">
+                    <div class="spec-panel">
+                        <div class="spec-panel-header">
+                            <span class="spec-index">01</span>
+                            <h2 class="spec-panel-title">Eliminated Hazards</h2>
+                        </div>
+                        <p class="spec-panel-body">
+                            Empirical security analyses across major systems codebases consistently attribute ~70% of high-severity vulnerabilities to memory unsafety. C-- removes the underlying syntactic constructs outright:
+                        </p>
+                        <dl class="spec-list">
+                            <div class="spec-list-row">
+                                <dt>Raw Pointers</dt>
+                                <dd>No address-of (<code>&amp;</code>), dereference (<code>*</code>), or pointer arithmetic operations exist in the grammar.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Null References</dt>
+                                <dd>Absent by construction. Every variable binding requires a statically verified initial value.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Unchecked Indexing</dt>
+                                <dd>All collection accesses validate bounds at runtime with deterministic traps on out-of-bounds indices.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Implicit Coercions</dt>
+                                <dd>Strict static typing prevents silent narrowing conversions, signed/unsigned mismatches, and truthy casts.</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="spec-panel">
+                        <div class="spec-panel-header">
+                            <span class="spec-index">02</span>
+                            <h2 class="spec-panel-title">Design Philosophy</h2>
+                        </div>
+                        <p class="spec-panel-body">
+                            Modern memory-safe languages typically trade language simplicity for expressive alias tracking (such as borrow checking and lifetime annotations) or heavy garbage collection runtimes.
+                        </p>
+                        <blockquote class="spec-quote">
+                            "Where verification of arbitrary aliasing is complex, C-- enforces deep-copy value semantics and lexical immutability by default."
+                        </blockquote>
+                        <p class="spec-panel-body">
+                            By treating composite collections (<code>array</code>, <code>list</code>, <code>stack</code>, <code>queue</code>) as isolated values on assignment and argument passing, C-- guarantees alias freedom without lifetime annotations.
+                        </p>
+                        <div class="metrics-strip">
+                            <div class="metric-cell">
+                                <span class="metric-val">60</span>
+                                <span class="metric-lbl">Diagnostic Codes</span>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="metric-val">10</span>
+                                <span class="metric-lbl">Precedence Tiers</span>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="metric-val">2</span>
+                                <span class="metric-lbl">Execution Backends</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="academic-credit-card">
+                    <div class="credit-header">
+                        <div>
+                            <div class="credit-tag">Academic Metadata &middot; Compiler Design Capstone</div>
+                            <h3 class="credit-title">School of Computer Science &amp; Engineering (SCOPE)</h3>
+                        </div>
+                        <span class="credit-session">Session 2024&ndash;2025</span>
+                    </div>
+                    <div class="credit-body">
+                        <div class="credit-col">
+                            <div class="credit-label">Engineering Team</div>
+                            <div class="credit-table">
+                                <div class="credit-row">
+                                    <span class="credit-name">Ronit Mexson</span>
+                                    <span class="badge-reg">24BAI0036</span>
+                                </div>
+                                <div class="credit-row">
+                                    <span class="credit-name">Mit Kumar Raju Panchal</span>
+                                    <span class="badge-reg">24BAI0279</span>
+                                </div>
+                                <div class="credit-row">
+                                    <span class="credit-name">Garv Gupta</span>
+                                    <span class="badge-reg">24BDS0169</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="credit-col">
+                            <div class="credit-label">Faculty Supervision</div>
+                            <div class="credit-supervisor">
+                                <div class="supervisor-name">Prof. Hariharan R L</div>
+                                <div class="supervisor-dept">Center for AI Research</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 3: KEY FEATURES / ARCHITECTURE
+             ================================================================ -->
+        <section class="tab-view" id="view-features">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">CORE GUARANTEES</div>
+                    <h1 class="doc-title">Language Architecture</h1>
+                    <p class="doc-lead">
+                        Six foundational invariants enforced across the lexical, syntactic, semantic, and code generation phases.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">01</span>
+                            <span class="feature-tag">CWE-119 / CWE-416 / CWE-476</span>
+                        </div>
+                        <h3 class="feature-title">Spatial &amp; Temporal Memory Safety</h3>
+                        <p class="feature-text">
+                            Buffer overflows, null pointer dereferences, and use-after-free faults are structurally unrepresentable. Memory allocation and reclamation for dynamic structures are managed transparently by the runtime and emitted C99 helpers.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">02</span>
+                            <span class="feature-tag">ALIAS FREEDOM</span>
+                        </div>
+                        <h3 class="feature-title">Deep-Copy Value Semantics</h3>
+                        <p class="feature-text">
+                            Composite containers behave identically to primitive scalars. Binding a collection to a new identifier or passing it to a function performs a deep structural clone, preventing unintended mutation across call frames.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">03</span>
+                            <span class="feature-tag">BINDING DISCIPLINE</span>
+                        </div>
+                        <h3 class="feature-title">Immutability by Default</h3>
+                        <p class="feature-text">
+                            Declarations introduced with <code>let</code> are immutable throughout their lexical scope. Reassignment is permitted only on bindings explicitly marked with <code>mut</code>, and uninitialized declarations are rejected at parse time.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">04</span>
+                            <span class="feature-tag">ERROR RECOVERY</span>
+                        </div>
+                        <h3 class="feature-title">Precision Diagnostics Engine</h3>
+                        <p class="feature-text">
+                            60 structured diagnostic codes render source context gutters, column-accurate carets, root-cause explanations, remediation hints, and Levenshtein edit-distance identifier suggestions.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">05</span>
+                            <span class="feature-tag">EXECUTION TARGETS</span>
+                        </div>
+                        <h3 class="feature-title">Dual-Backend Compilation</h3>
+                        <p class="feature-text">
+                            Execute directly inside the deterministic tree-walking reference interpreter (with configurable step and call-depth guards) or transpile into self-contained, bounds-checked ISO C99 source code.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">06</span>
+                            <span class="feature-tag">FIRST-CLASS CONTAINERS</span>
+                        </div>
+                        <h3 class="feature-title">Intrinsic Abstract Data Types</h3>
+                        <p class="feature-text">
+                            Fixed-length arrays (<code>array&lt;T&gt;</code>), resizable vectors (<code>list&lt;T&gt;</code>), LIFO stacks (<code>stack&lt;T&gt;</code>), and FIFO queues (<code>queue&lt;T&gt;</code>) are first-class generic types checked by the semantic analyzer.
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 4: COMPILER PIPELINE
+             ================================================================ -->
+        <section class="tab-view" id="view-pipeline">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">INTERNAL ARCHITECTURE</div>
+                    <h1 class="doc-title">Compilation &amp; Execution Pipeline</h1>
+                    <p class="doc-lead">
+                        A four-stage front-to-back architecture translating UTF-8 source text into verified AST nodes, direct evaluation, or portable ISO C99.
+                    </p>
+                </div>
+
+                <div class="pipeline-visual-container">
+                    <div class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">STAGE 01</span>
+                            <code class="step-module">cmm/lexer.py</code>
+                        </div>
+                        <h3 class="step-title">Lexical Scanner</h3>
+                        <p class="step-desc">
+                            Normalizes UTF-8 input and scans source characters into a deterministic stream of typed tokens with exact 1-indexed line and column spans.
+                        </p>
+                        <div class="step-meta">Output &rarr; <code>List[Token]</code></div>
+                    </div>
+
+                    <div class="pipeline-connector" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+
+                    <div class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">STAGE 02</span>
+                            <code class="step-module">cmm/parser.py</code>
+                        </div>
+                        <h3 class="step-title">Recursive Descent Parser</h3>
+                        <p class="step-desc">
+                            Builds an Abstract Syntax Tree using LL(k) statement parsing combined with 10-tier Pratt precedence climbing for expressions.
+                        </p>
+                        <div class="step-meta">Output &rarr; <code>Program(AST)</code></div>
+                    </div>
+
+                    <div class="pipeline-connector" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+
+                    <div class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">STAGE 03</span>
+                            <code class="step-module">cmm/analyzer.py</code>
+                        </div>
+                        <h3 class="step-title">Semantic Analyzer</h3>
+                        <p class="step-desc">
+                            Resolves lexical scopes, checks type compatibility, enforces <code>let</code>/<code>mut</code> rules, and verifies control-flow return completeness.
+                        </p>
+                        <div class="step-meta">Output &rarr; <code>Verified AST</code></div>
+                    </div>
+
+                    <div class="pipeline-connector" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+
+                    <div class="pipeline-step-card dual-target-card">
+                        <div class="step-header">
+                            <span class="step-badge">STAGE 04</span>
+                            <code class="step-module">interpreter / codegen_c</code>
+                        </div>
+                        <h3 class="step-title">Dual Execution Backends</h3>
+                        <p class="step-desc">
+                            <strong>Target A:</strong> Tree-walking reference evaluator.<br>
+                            <strong>Target B:</strong> Hardened ISO C99 code generator.
+                        </p>
+                        <div class="step-meta">Output &rarr; <code>Stdout / C99</code></div>
+                    </div>
+                </div>
+
+                <div class="pipeline-explanation-box">
+                    <div class="box-grid">
+                        <div>
+                            <h3 class="box-title">Normative Reference Interpreter</h3>
+                            <p>
+                                Implemented in <code>cmm/interpreter.py</code>, the reference evaluator directly executes verified AST nodes with deterministic activation records, deep-copy value semantics, checked arithmetic, and a 100,000-step execution watchdog to prevent runaway loops in interactive sessions.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="box-title">ISO C99 Source-to-Source Transpiler</h3>
+                            <p>
+                                Implemented in <code>cmm/codegen_c.py</code>, the transpiler lowers C-- constructs into portable C99 suitable for <code>gcc -std=c99 -O2</code> or <code>clang</code>, automatically injecting runtime bounds assertions, division-by-zero traps, and deep-copy helpers.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 5: SYNTAX CHEATSHEET / REFERENCE
+             ================================================================ -->
+        <section class="tab-view" id="view-syntax">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">GRAMMAR &amp; IDIOMS</div>
+                    <h1 class="doc-title">Language Reference</h1>
+                    <p class="doc-lead">
+                        Canonical syntax patterns for bindings, functions, native containers, and structured control flow. Click any snippet's action button to load it into the editor.
+                    </p>
+                </div>
+
+                <div class="syntax-grid">
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">01. Bindings &amp; Scalar Types</h3>
+                            <button class="btn-load-snippet" data-snippet="bindings" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> immut = 42;         <span class="token-comment">// Immutable by default</span>
+<span class="token-kw">mut</span> counter = 0;        <span class="token-comment">// Mutable binding</span>
+counter = counter + 1;  <span class="token-comment">// Permitted reassignment</span>
+
+<span class="token-comment">// Inferred scalar types: int, float, bool, string</span>
+<span class="token-kw">let</span> pi = 3.14159;
+<span class="token-kw">let</span> active = <span class="token-kw">true</span>;
+<span class="token-kw">let</span> name = <span class="token-str">"C--"</span>;</code></pre>
+                    </div>
+
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">02. Functions &amp; Procedures</h3>
+                            <button class="btn-load-snippet" data-snippet="functions" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-comment">// Typed function with explicit return type</span>
+<span class="token-kw">fn</span> add(a: <span class="token-type">int</span>, b: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
+    <span class="token-kw">return</span> a + b;
+}
+
+<span class="token-comment">// Void procedure (omits return type arrow)</span>
+<span class="token-kw">fn</span> greet(user: <span class="token-type">string</span>) {
+    print(<span class="token-str">"Hello,"</span>);
+    print(user);
+    <span class="token-kw">return</span>;
+}</code></pre>
+                    </div>
+
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">03. Arrays &amp; Dynamic Lists</h3>
+                            <button class="btn-load-snippet" data-snippet="collections" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-comment">// Fixed-capacity array (bounds checked)</span>
+<span class="token-kw">mut</span> arr = [10, 20, 30];
+arr[0] = 99;
+print(arr.len());
+
+<span class="token-comment">// Dynamic list</span>
+<span class="token-kw">mut</span> items = <span class="token-type">list</span>&lt;<span class="token-type">string</span>&gt;();
+items.push(<span class="token-str">"alpha"</span>);
+items.push(<span class="token-str">"beta"</span>);
+items.insert(1, <span class="token-str">"inserted"</span>);
+print(items.pop());</code></pre>
+                    </div>
+
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">04. LIFO Stacks &amp; FIFO Queues</h3>
+                            <button class="btn-load-snippet" data-snippet="stack_queue" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-comment">// LIFO Stack</span>
+<span class="token-kw">mut</span> st = <span class="token-type">stack</span>&lt;<span class="token-type">int</span>&gt;();
+st.push(10);
+st.push(20);
+print(st.peek()); <span class="token-comment">// 20</span>
+print(st.pop());  <span class="token-comment">// 20</span>
+
+<span class="token-comment">// FIFO Queue</span>
+<span class="token-kw">mut</span> q = <span class="token-type">queue</span>&lt;<span class="token-type">int</span>&gt;();
+q.enqueue(1);
+print(q.dequeue()); <span class="token-comment">// 1</span></code></pre>
+                    </div>
+
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">05. Switch-Case Dispatch</h3>
+                            <button class="btn-load-snippet" data-snippet="switch_matching" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> day = 3;
+<span class="token-kw">switch</span> (day) {
+    <span class="token-kw">case</span> 1: { print(<span class="token-str">"Monday"</span>); }
+    <span class="token-kw">case</span> 2: { print(<span class="token-str">"Tuesday"</span>); }
+    <span class="token-kw">case</span> 3: { print(<span class="token-str">"Wednesday"</span>); }
+    <span class="token-kw">default</span>: { print(<span class="token-str">"Weekend"</span>); }
+}
+
+<span class="token-comment">// String literal matching (no break needed)</span>
+<span class="token-kw">switch</span> (cmd) {
+    <span class="token-kw">case</span> <span class="token-str">"run"</span>: { execute(); }
+    <span class="token-kw">default</span>: {}
+}</code></pre>
+                    </div>
+
+                    <div class="syntax-card">
+                        <div class="syntax-card-header">
+                            <h3 class="syntax-title">06. Structured Iteration &amp; Branching</h3>
+                            <button class="btn-load-snippet" data-snippet="loops" title="Load example in Playground">Open in Playground &rarr;</button>
+                        </div>
+                        <pre class="syntax-code"><code><span class="token-comment">// Conditional branching</span>
+<span class="token-kw">if</span> (score &gt;= 90) { print(<span class="token-str">"A"</span>); }
+<span class="token-kw">else</span> <span class="token-kw">if</span> (score &gt;= 80) { print(<span class="token-str">"B"</span>); }
+<span class="token-kw">else</span> { print(<span class="token-str">"C"</span>); }
+
+<span class="token-comment">// Scoped C-style for loop</span>
+<span class="token-kw">for</span> (<span class="token-kw">mut</span> i = 0; i &lt; 5; i = i + 1) {
+    print(i);
+}
+
+<span class="token-comment">// While &amp; Do-While loops</span>
+<span class="token-kw">while</span> (n &gt; 0) { n = n - 1; }
+<span class="token-kw">do</span> { n = n + 1; } <span class="token-kw">while</span> (n &lt; 10);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Status / Metadata Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <span class="footer-item-strong">C-- Compiler Project</span>
+                <span class="footer-sep">&middot;</span>
+                <span>SCOPE &middot; Center for AI Research</span>
+            </div>
+            <div class="footer-right">
+                <span>R. Mexson, M. K. R. Panchal, G. Gupta</span>
+                <span class="footer-sep">&middot;</span>
+                <span>Advisor: Prof. Hariharan R L</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application Controller -->
+    <script src="app.js"></script>
+</body>
+</html>

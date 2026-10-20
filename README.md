@@ -15,14 +15,15 @@
 
 [What is C--?](#1-what-is-c) •
 [Core Features](#2-core-language-features) •
-[Installation Guide](#3-installation-guide) •
-[Quickstart & Showcase](#4-quickstart--showcase-demo) •
-[CLI Reference](#5-command-line-interface-cli) •
-[Error Guidance](#6-compiler-diagnostics--beginner-friendly-fix-guidance) •
-[C99 Backend](#7-c99-transpiler-backend) •
-[Security & Hardening](#8-security-audit--zero-vulnerability-guarantee) •
-[Testing](#9-testing--quality-assurance) •
-[File Icons & IDE](#10-file-icons--ide-integration-cmm-association)
+[Web Playground](#3-web-playground--interactive-compiler-studio) •
+[Installation Guide](#4-installation-guide) •
+[Quickstart & Showcase](#5-quickstart--showcase-demo) •
+[CLI Reference](#6-command-line-interface-cli) •
+[Error Guidance](#7-compiler-diagnostics--beginner-friendly-fix-guidance) •
+[C99 Backend](#8-c99-transpiler-backend) •
+[Security & Hardening](#9-security-audit--zero-vulnerability-guarantee) •
+[Testing](#10-testing--quality-assurance) •
+[File Icons & IDE](#11-file-icons--ide-integration-cmm-association)
 
 ---
 
@@ -61,7 +62,26 @@
 
 ---
 
-## 3. Installation Guide
+## 3. Web Playground & Interactive Compiler Studio
+
+C-- includes a zero-dependency web playground and interactive compiler explorer (`web/server.py`). Users can test language features, write code, inspect AST/tokens, run code in the reference interpreter, and transpile C-- directly into ISO C99 code through a split-screen browser interface with a top navigation bar.
+
+### Launching the Web Studio
+```bash
+python3 web/server.py
+```
+Open **`http://localhost:8000`** in any web browser.
+
+### Key Capabilities of the Web Studio
+- **Top Navigation Bar:** Tabs for **Playground & Transpiler**, **Overview**, **Key Features**, **Compiler Pipeline**, and **Syntax Cheatsheet**.
+- **Split-Screen Studio:** Line-numbered code editor on the left; real-time execution output console & C99 transpiled code viewer on the right.
+- **One-Click Transpilation:** Click **"⚙ Transpile to C"** to transpose the active C-- code into hardened ISO C99.
+- **Preset Library:** 7 preloaded examples covering recursion, lists, stacks/queues, value semantics, switch-case, C99 transpilation, and typo diagnostics.
+- **Academic PDF Report:** Download or view the comprehensive 22-page academic report right from the top header bar.
+
+---
+
+## 4. Installation Guide
 
 C-- runs natively on **macOS**, **Linux**, and **Windows**. It requires **Python 3.10 or newer** and has **zero third-party runtime dependencies**.
 
@@ -206,7 +226,7 @@ Hello, world!
 
 ---
 
-## 4. Quickstart & Showcase Demo
+## 5. Quickstart & Showcase Demo
 
 ### Running the Interactive Language Showcase
 The repository includes a comprehensive demonstration program [`demo.cmm`](./demo.cmm) that exercises all 10 language feature areas (types, immutability, mutability, expressions, mixed arithmetic, short-circuit logic, scoping, shadowing, conditionals, and all 3 loop forms):
@@ -258,7 +278,7 @@ Counting in C--:
 
 ---
 
-## 5. Command-Line Interface (CLI)
+## 6. Command-Line Interface (CLI)
 
 The `cmm` CLI follows standard UNIX conventions and guarantees platform-independent UTF-8 output with `\n` line endings.
 
@@ -289,7 +309,7 @@ cmm <command> [options] <file>
 
 ---
 
-## 6. Compiler Diagnostics & Beginner-Friendly Fix Guidance
+## 7. Compiler Diagnostics & Beginner-Friendly Fix Guidance
 
 C-- features human-friendly compiler diagnostics designed for beginners. Diagnostics follow a clear layout with line-numbered source gutters, token underlines, plain-language explanations, actionable fixes with code examples, and "did you mean" suggestions:
 
@@ -359,7 +379,7 @@ overflow.cmm:4:16: runtime error: 64-bit signed integer overflow
 
 ---
 
-## 7. C99 Transpiler Backend
+## 8. C99 Transpiler Backend
 
 C-- includes an optimizing C99 transpiler (`cmm transpile <file> -o <out.c>`) conforming strictly to the ISO C99 standard.
 
@@ -399,7 +419,7 @@ cl /std:c99 /W4 /WX demo.c /Fe:demo.exe
 
 ---
 
-## 8. Security Audit & Zero-Vulnerability Guarantee
+## 9. Security Audit & Zero-Vulnerability Guarantee
 
 The C-- compiler, interpreter, and code generator have undergone a comprehensive security audit to ensure safety when processing untrusted code and running in public environments:
 
@@ -418,7 +438,7 @@ The C-- compiler, interpreter, and code generator have undergone a comprehensive
 
 ---
 
-## 9. Testing & Quality Assurance
+## 10. Testing & Quality Assurance
 
 The codebase includes an exhaustive test suite of **416 tests** validating lexical analysis, parsing, semantic analysis, float formatting, interpretation, CLI behaviors, example programs, v0.2 language features, beginner-friendly error diagnostics, and C99 code generation:
 
@@ -444,7 +464,7 @@ pytest -v
 
 ---
 
-## 10. File Icons & IDE Integration (.cmm Association)
+## 11. File Icons & IDE Integration (.cmm Association)
 
 <div align="center">
 <img src="assets/logo.png" width="120" alt="C-- 3D Logo" />
@@ -519,7 +539,7 @@ update-mime-database ~/.local/share/mime
 
 ---
 
-## 11. Repository Architecture & Layout
+## 12. Repository Architecture & Layout
 
 ```text
 compiler-mini-project/
@@ -576,13 +596,13 @@ compiler-mini-project/
 
 ---
 
-## 12. Specification & Documentation
+## 13. Specification & Documentation
 
 - 📘 **[Language Guide & Programmer's Manual](docs/LANGUAGE_GUIDE.md)**: Practical reference guide covering syntax, operators, control flow, diagnostics, and idiomatic code recipes.
 - 📜 **[Normative Specification (SPEC.md)](docs/SPEC.md)**: The authoritative, character-exact specification of the C-- language grammar, semantics, and reference requirements.
 
 ---
 
-## 13. License
+## 14. License
 
 This project is open-source software licensed under the **[MIT License](LICENSE)**.
