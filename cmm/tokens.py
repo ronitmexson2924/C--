@@ -5,9 +5,9 @@ from enum import Enum, auto
 
 
 class TokenType(Enum):
-    """All token types supported in C-- version 0.1.0."""
+    """All token types supported in C-- version 0.2.0."""
 
-    # Keywords (Section 3.8)
+    # Keywords (Section 3.8 and §A3.1)
     MODULE = auto()
     FN = auto()
     MAIN = auto()
@@ -21,6 +21,18 @@ class TokenType(Enum):
     PRINT = auto()
     TRUE = auto()
     FALSE = auto()
+    RETURN = auto()
+    SWITCH = auto()
+    CASE = auto()
+    DEFAULT = auto()
+    KW_INT = auto()
+    KW_FLOAT = auto()
+    KW_BOOL = auto()
+    KW_STRING = auto()
+    KW_ARRAY = auto()
+    KW_LIST = auto()
+    KW_STACK = auto()
+    KW_QUEUE = auto()
 
     # Other literals and identifiers
     IDENT = auto()
@@ -50,12 +62,18 @@ class TokenType(Enum):
     STAREQ = auto()
     SLASHEQ = auto()
     PERCENTEQ = auto()
+    ARROW = auto()  # ->
 
     # Punctuation
     LPAREN = auto()
     RPAREN = auto()
     LBRACE = auto()
     RBRACE = auto()
+    LBRACKET = auto()  # [
+    RBRACKET = auto()  # ]
+    COMMA = auto()     # ,
+    COLON = auto()     # :
+    DOT = auto()       # .
     SEMI = auto()
 
     # End of file
@@ -81,7 +99,7 @@ class Token:
     col: int
 
 
-# Active language keywords (Section 3.4)
+# Active language keywords (Section 3.4 & §A3.1)
 KEYWORDS: dict[str, TokenType] = {
     "module": TokenType.MODULE,
     "fn": TokenType.FN,
@@ -96,13 +114,24 @@ KEYWORDS: dict[str, TokenType] = {
     "print": TokenType.PRINT,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
+    "return": TokenType.RETURN,
+    "switch": TokenType.SWITCH,
+    "case": TokenType.CASE,
+    "default": TokenType.DEFAULT,
+    "int": TokenType.KW_INT,
+    "float": TokenType.KW_FLOAT,
+    "bool": TokenType.KW_BOOL,
+    "string": TokenType.KW_STRING,
+    "array": TokenType.KW_ARRAY,
+    "list": TokenType.KW_LIST,
+    "stack": TokenType.KW_STACK,
+    "queue": TokenType.KW_QUEUE,
 }
 
-# Reserved words for future use (Section 3.4)
+# Reserved words for future use (Section 3.4 & §A3.1)
 RESERVED_WORDS: dict[str, TokenType] = {
     "break": TokenType.RESERVED,
     "continue": TokenType.RESERVED,
-    "return": TokenType.RESERVED,
     "struct": TokenType.RESERVED,
     "enum": TokenType.RESERVED,
     "match": TokenType.RESERVED,
@@ -115,10 +144,6 @@ RESERVED_WORDS: dict[str, TokenType] = {
     "const": TokenType.RESERVED,
     "var": TokenType.RESERVED,
     "type": TokenType.RESERVED,
-    "int": TokenType.RESERVED,
-    "float": TokenType.RESERVED,
-    "bool": TokenType.RESERVED,
-    "string": TokenType.RESERVED,
 }
 
 # Combined dictionary mapping keywords and reserved words

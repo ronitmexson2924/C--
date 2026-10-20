@@ -1,20 +1,48 @@
-"""Type enum, Symbol dataclass, and operator typing tables for C-- per Section 7.2 and 12.6."""
+"""Type definitions, Symbol dataclass, and operator typing tables for C-- per SPEC §7.2 and v0.2.0 §A4."""
 
+from __future__ import annotations
 from dataclasses import dataclass
-from enum import Enum
+from typing import Optional
 
 
-class Type(Enum):
-    """The four types of C-- plus the internal INVALID type for error cascade suppression."""
+@dataclass(frozen=True)
+class Type:
+    """Type representation in C-- v0.2.0.
 
-    INT = "int"
-    FLOAT = "float"
-    BOOL = "bool"
-    STRING = "string"
-    INVALID = "invalid"
+    Can be a primitive type ('int', 'float', 'bool', 'string'),
+    a composite collection type ('array<T>', 'list<T>', 'stack<T>', 'queue<T>'),
+    or internal 'void' / 'invalid'.
+    """
+
+    name: str  # "int", "float", "bool", "string", "array", "list", "stack", "queue", "void", "invalid"
+    elem: Optional[Type] = None
 
     def __str__(self) -> str:
-        return self.value
+        if self.elem is not None:
+            return f"{self.name}<{self.elem}>"
+        return self.name
+
+    def is_primitive(self) -> bool:
+        return self.name in ("int", "float", "bool", "string")
+
+    def is_collection(self) -> bool:
+        return self.name in ("array", "list", "stack", "queue")
+
+    def is_indexable(self) -> bool:
+        return self.name in ("string", "array", "list")
+
+    @classmethod
+    def coll(cls, kind: str, elem: Type) -> Type:
+        return cls(kind, elem)
+
+
+# Class constants matching v0.1 enum interface
+Type.INT = Type("int")
+Type.FLOAT = Type("float")
+Type.BOOL = Type("bool")
+Type.STRING = Type("string")
+Type.VOID = Type("void")
+Type.INVALID = Type("invalid")
 
 
 @dataclass
@@ -22,7 +50,7 @@ class Symbol:
     """A symbol table entry recording variable metadata.
 
     Attributes:
-        type: The inferred C-- type of the variable.
+        type: The inferred or declared C-- type of the variable.
         mutable: True if declared with 'mut', False if declared with 'let'.
         decl_line: Line number of the variable name in its declaration.
         decl_col: Column number of the variable name in its declaration.
@@ -108,7 +136,7 @@ BINARY_OPERATORS: dict[tuple[str, Type, Type], Type] = {
     ("||", Type.BOOL, Type.BOOL): Type.BOOL,
 }
 
-# Mapping of compound assignment operators to underlying binary arithmetic operators
+
 COMPOUND_TO_BINARY: dict[str, str] = {
     "+=": "+",
     "-=": "-",
@@ -116,3 +144,4 @@ COMPOUND_TO_BINARY: dict[str, str] = {
     "/=": "/",
     "%=": "%",
 }
+

@@ -67,8 +67,38 @@ def format_float(x: float) -> str:
     return f"{sign_str}{d1}.{rest}e{exp_sign}{abs_exp_str}"
 
 
-def format_value(v: int | float | bool | str) -> str:
-    """Format any C-- runtime value for print statement per Section 9."""
+from typing import Any
+
+from cmm.runtime_values import CmmArray, CmmList, CmmQueue, CmmStack
+
+
+def escape_collection_string(s: str) -> str:
+    """Escape string element inside collections per §A6.7."""
+    escaped = (
+        s.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+        .replace("\r", "\\r")
+    )
+    return f'"{escaped}"'
+
+
+def format_collection_element(v: Any) -> str:
+    """Format primitive element inside collection per §A6.7."""
+    if isinstance(v, str):
+        return escape_collection_string(v)
+    elif isinstance(v, bool):
+        return "true" if v else "false"
+    elif isinstance(v, int):
+        return str(v)
+    elif isinstance(v, float):
+        return format_float(v)
+    raise TypeError(f"Cannot format element of unexpected type: {type(v)}")
+
+
+def format_value(v: Any) -> str:
+    """Format any C-- runtime value for print statement per Section 9 and §A6.7."""
     if isinstance(v, bool):
         return "true" if v else "false"
     elif isinstance(v, int):
@@ -77,4 +107,14 @@ def format_value(v: int | float | bool | str) -> str:
         return format_float(v)
     elif isinstance(v, str):
         return v
+    elif isinstance(v, (CmmArray, CmmList)):
+        inner = ", ".join(format_collection_element(x) for x in v.elements)
+        return f"[{inner}]"
+    elif isinstance(v, CmmStack):
+        inner = ", ".join(format_collection_element(x) for x in v.elements)
+        return f"stack[{inner}]"
+    elif isinstance(v, CmmQueue):
+        inner = ", ".join(format_collection_element(x) for x in v.elements)
+        return f"queue[{inner}]"
     raise TypeError(f"Cannot format value of unexpected type: {type(v)}")
+

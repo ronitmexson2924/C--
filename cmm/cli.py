@@ -245,7 +245,13 @@ def _transpile_pipeline(path_str: str, out_path_str: str) -> int:
             sys.stderr.write(format_error(err, path_str, source_lines))
         return 1
 
-    c_code = generate_c(ast, path_str, source_lines)
+    try:
+        c_code = generate_c(ast, path_str, source_lines)
+    except CmmError as e:
+        sys.stdout.flush()
+        sys.stderr.write(format_error(e, path_str, source_lines))
+        return 1
+
 
     try:
         out_p = Path(out_path_str)

@@ -312,11 +312,14 @@ def test_s001_expected_fn() -> None:
     assert exc_info.value.message == "expected 'fn', found 'main'"
 
 
-def test_s001_expected_main() -> None:
+def test_s001_expected_fn_identifier() -> None:
+    # In v0.1: fn foo() was S001 expected 'main'. In v0.2, fn <ident> is valid (§A2 #3).
+    # Non-identifier after fn is S001.
     with pytest.raises(ParseError) as exc_info:
-        parse_src("module main; fn foo() {}")
+        parse_src("module main; fn 123() {}")
     assert exc_info.value.code == "S001"
-    assert exc_info.value.message == "expected 'main', found 'foo'"
+    assert exc_info.value.message == "expected identifier or 'main', found '123'"
+
 
 
 def test_s001_expected_lparen() -> None:
@@ -376,11 +379,11 @@ def test_s001_expected_expression() -> None:
 
 
 def test_s001_expected_assignment_operator() -> None:
-    # x + 1; where an assignment is expected
+    # x + 1; where an assignment is expected (§A5 note 1, §A7.3)
     with pytest.raises(ParseError) as exc_info:
         parse_src("module main; fn main() { x + 1; }")
     assert exc_info.value.code == "S001"
-    assert exc_info.value.message == "expected assignment operator, found '+'"
+    assert exc_info.value.message == "expected assignment, call or method call, found '+'"
 
 
 def test_s001_expected_if_or_lbrace_after_else() -> None:
@@ -412,17 +415,20 @@ def test_s001_expected_for_update() -> None:
 
 
 def test_s002_unexpected_after_end_of_program() -> None:
+    # In v0.2 (§A7.3), S002 is retired; top-level only allows 'fn' or EOF (S001).
     with pytest.raises(ParseError) as exc_info:
         parse_src("module main; fn main() {} let x = 1;")
-    assert exc_info.value.code == "S002"
-    assert exc_info.value.message == "unexpected 'let' after end of program"
+    assert exc_info.value.code == "S001"
+    assert exc_info.value.message == "expected 'fn', found 'let'"
 
 
 def test_s003_reserved_word_replaces_syntax_error() -> None:
+    # In v0.2 (§A3.2), 'return' became a keyword, while words like 'break' remain reserved.
     with pytest.raises(ParseError) as exc_info:
-        parse_src("module main; fn main() { let return = 1; }")
+        parse_src("module main; fn main() { let break = 1; }")
     assert exc_info.value.code == "S003"
-    assert exc_info.value.message == "'return' is reserved for future use and cannot be used in this version"
+    assert exc_info.value.message == "'break' is reserved for future use and cannot be used in this version"
+
 
 
 def test_s004_nesting_limit_blocks() -> None:
@@ -474,10 +480,12 @@ fn main() {
     out = format_ast(prog)
     expected = (
         'Program(module="main")\n'
-        '  body: Block\n'
-        '    stmt: VarDecl(mutable=false, name="x")\n'
-        '      init: BinaryOp(op="+")\n'
-        '        left: Literal(type=int, value=1)\n'
-        '        right: Literal(type=int, value=2)\n'
+        '  function: FunctionDef(name="main")\n'
+        '    body: Block\n'
+        '      stmt: VarDecl(mutable=false, name="x")\n'
+        '        init: BinaryOp(op="+")\n'
+        '          left: Literal(type=int, value=1)\n'
+        '          right: Literal(type=int, value=2)\n'
     )
     assert out == expected
+

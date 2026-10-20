@@ -1,4 +1,4 @@
-"""Lexer and source text normalization for C--."""
+"""Lexer and source text normalization for C-- v0.2.0."""
 
 import math
 from cmm.errors import LexError
@@ -106,7 +106,7 @@ def tokenize(source: str) -> list[Token]:
         start_col = col
         start_pos = pos
 
-        # 3. Identifiers and Keywords (§3.3, §3.4)
+        # 3. Identifiers and Keywords (§3.3, §3.4, §A3.1)
         if c.isascii() and (c.isalpha() or c == "_"):
             while pos < length and source[pos].isascii() and (source[pos].isalnum() or source[pos] == "_"):
                 advance()
@@ -179,47 +179,97 @@ def tokenize(source: str) -> list[Token]:
                 tokens.append(Token(TokenType.FLOAT, lexeme, float_val, start_line, start_col))
             continue
 
-        # 5. Strings (§3.5)
-        if c == '"':
-            advance()  # consume opening quote
-            chars: list[str] = []
-            while pos < length:
-                sc = source[pos]
-                if sc == "\n":
-                    raise LexError("L002", "unterminated string literal", start_line, start_col)
-                if sc == '"':
-                    advance()  # consume closing quote
-                    lexeme = source[start_pos:pos]
-                    tokens.append(Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col))
-                    break
-                if sc == "\\":
-                    esc_line = line
-                    esc_col = col
-                    advance()  # consume '\'
-                    if pos >= length or source[pos] == "\n":
-                        raise LexError("L002", "unterminated string literal", start_line, start_col)
-                    esc_c = source[pos]
-                    advance()  # consume escaped char
-                    if esc_c == "n":
-                        chars.append("\n")
-                    elif esc_c == "t":
-                        chars.append("\t")
-                    elif esc_c == "r":
-                        chars.append("\r")
-                    elif esc_c == '"':
-                        chars.append('"')
-                    elif esc_c == "\\":
-                        chars.append("\\")
-                    else:
-                        raise LexError("L003", f"invalid escape sequence '\\{esc_c}'", esc_line, esc_col)
-                else:
-                    chars.append(sc)
-                    advance()
+
+        # 5. Strings (§3.5 & §A3.3)
+        if c in ('"', "'"):
+            q = c
+            is_triple = False
+            if pos + 2 < length and source[pos + 1] == q and source[pos + 2] == q:
+                is_triple = True
+                advance()  # 1st quote
+                advance()  # 2nd quote
+                advance()  # 3rd quote
             else:
+                advance()  # single quote
+
+            chars: list[str] = []
+            closed = False
+            while pos < length:
+                if is_triple:
+                    if source[pos] == q and pos + 2 < length and source[pos + 1] == q and source[pos + 2] == q:
+                        advance()
+                        advance()
+                        advance()
+                        closed = True
+                        break
+                    sc = source[pos]
+                    if sc == "\\":
+                        esc_line = line
+                        esc_col = col
+                        advance()  # consume '\'
+                        if pos >= length:
+                            raise LexError("L002", "unterminated string literal", start_line, start_col)
+                        esc_c = source[pos]
+                        advance()  # consume escaped char
+                        if esc_c == "n":
+                            chars.append("\n")
+                        elif esc_c == "t":
+                            chars.append("\t")
+                        elif esc_c == "r":
+                            chars.append("\r")
+                        elif esc_c == '"':
+                            chars.append('"')
+                        elif esc_c == "'":
+                            chars.append("'")
+                        elif esc_c == "\\":
+                            chars.append("\\")
+                        else:
+                            esc_display = "U+000A" if esc_c == "\n" else esc_c
+                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col)
+                    else:
+                        chars.append(advance())
+                else:
+                    sc = source[pos]
+                    if sc == "\n":
+                        raise LexError("L002", "unterminated string literal", start_line, start_col)
+                    if sc == q:
+                        advance()  # consume closing quote
+                        closed = True
+                        break
+                    if sc == "\\":
+                        esc_line = line
+                        esc_col = col
+                        advance()  # consume '\'
+                        if pos >= length or source[pos] == "\n":
+                            raise LexError("L002", "unterminated string literal", start_line, start_col)
+                        esc_c = source[pos]
+                        advance()  # consume escaped char
+                        if esc_c == "n":
+                            chars.append("\n")
+                        elif esc_c == "t":
+                            chars.append("\t")
+                        elif esc_c == "r":
+                            chars.append("\r")
+                        elif esc_c == '"':
+                            chars.append('"')
+                        elif esc_c == "'":
+                            chars.append("'")
+                        elif esc_c == "\\":
+                            chars.append("\\")
+                        else:
+                            esc_display = "U+000A" if esc_c == "\n" else esc_c
+                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col)
+                    else:
+                        chars.append(advance())
+
+            if not closed:
                 raise LexError("L002", "unterminated string literal", start_line, start_col)
+
+            lexeme = source[start_pos:pos]
+            tokens.append(Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col))
             continue
 
-        # 6. Operators and Punctuation (§3.6)
+        # 6. Operators and Punctuation (§3.6 & §A3.1)
         if c == "+":
             advance()
             if pos < length and source[pos] == "+":
@@ -238,6 +288,9 @@ def tokenize(source: str) -> list[Token]:
             if pos < length and source[pos] == "=":
                 advance()
                 tokens.append(Token(TokenType.MINUSEQ, "-=", None, start_line, start_col))
+            elif pos < length and source[pos] == ">":
+                advance()
+                tokens.append(Token(TokenType.ARROW, "->", None, start_line, start_col))
             else:
                 tokens.append(Token(TokenType.MINUS, "-", None, start_line, start_col))
             continue
@@ -341,6 +394,31 @@ def tokenize(source: str) -> list[Token]:
         if c == "}":
             advance()
             tokens.append(Token(TokenType.RBRACE, "}", None, start_line, start_col))
+            continue
+
+        if c == "[":
+            advance()
+            tokens.append(Token(TokenType.LBRACKET, "[", None, start_line, start_col))
+            continue
+
+        if c == "]":
+            advance()
+            tokens.append(Token(TokenType.RBRACKET, "]", None, start_line, start_col))
+            continue
+
+        if c == ",":
+            advance()
+            tokens.append(Token(TokenType.COMMA, ",", None, start_line, start_col))
+            continue
+
+        if c == ":":
+            advance()
+            tokens.append(Token(TokenType.COLON, ":", None, start_line, start_col))
+            continue
+
+        if c == ".":
+            advance()
+            tokens.append(Token(TokenType.DOT, ".", None, start_line, start_col))
             continue
 
         if c == ";":

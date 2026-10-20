@@ -7,22 +7,33 @@ import math
 from typing import Optional, Union
 
 from cmm.ast_nodes import (
+    ASTNode,
+    ArrayLiteral,
     Assign,
     BinaryOp,
     Block,
+    Call,
+    CallStmt,
     DoWhile,
     Expr,
     For,
     If,
+    Index,
+    IndexAssign,
     Literal,
+    MethodCall,
+    NewCollection,
     Print,
     Program,
+    ReturnStmt,
     Stmt,
+    SwitchStmt,
     UnaryOp,
     VarDecl,
     Variable,
     While,
 )
+from cmm.errors import CmmError, TranspileError
 from cmm.types import (
     BINARY_OPERATORS,
     COMPOUND_TO_BINARY,
@@ -583,10 +594,69 @@ class CCodegen:
             self._pop_scope()
         return lines
 
+    def _validate_v01_subset(self, program: Program) -> None:
+        """Reject v0.2-only features before C code generation per §A10."""
+        for fn in program.functions:
+            if fn.name != "main":
+                raise TranspileError("T001", f"C backend does not support user-defined functions other than 'main' ('{fn.name}')", fn.line, fn.col)
+
+        def walk(node: ASTNode) -> None:
+            if isinstance(node, (Call, CallStmt)):
+                name = node.name if isinstance(node, Call) else (node.call.name if isinstance(node.call, Call) else "call")
+                raise TranspileError("T001", f"C backend does not support function calls ('{name}')", node.line, node.col)
+            elif isinstance(node, MethodCall):
+                raise TranspileError("T001", f"C backend does not support method calls ('.{node.method}')", node.line, node.col)
+            elif isinstance(node, (Index, IndexAssign)):
+                raise TranspileError("T001", "C backend does not support indexing", node.line, node.col)
+            elif isinstance(node, (ArrayLiteral, NewCollection)):
+                raise TranspileError("T001", "C backend does not support collections", node.line, node.col)
+            elif isinstance(node, SwitchStmt):
+                raise TranspileError("T001", "C backend does not support 'switch' statements", node.line, node.col)
+            elif isinstance(node, ReturnStmt):
+                raise TranspileError("T001", "C backend does not support 'return' in main", node.line, node.col)
+            elif isinstance(node, VarDecl):
+                walk(node.init)
+
+            elif isinstance(node, Block):
+                for s in node.statements:
+                    walk(s)
+            elif isinstance(node, Assign):
+                walk(node.value)
+            elif isinstance(node, Print):
+                walk(node.expr)
+            elif isinstance(node, If):
+                walk(node.cond)
+                walk(node.then_block)
+                if node.else_branch:
+                    walk(node.else_branch)
+            elif isinstance(node, While):
+                walk(node.cond)
+                walk(node.body)
+            elif isinstance(node, DoWhile):
+                walk(node.body)
+                walk(node.cond)
+            elif isinstance(node, For):
+                if node.init:
+                    walk(node.init)
+                if node.cond:
+                    walk(node.cond)
+                if node.update:
+                    walk(node.update)
+                walk(node.body)
+            elif isinstance(node, BinaryOp):
+                walk(node.left)
+                walk(node.right)
+            elif isinstance(node, UnaryOp):
+                walk(node.operand)
+
+        walk(program.body)
+
     def generate(self, program: Program) -> str:
         """Generate complete standard C99 source code."""
+        self._validate_v01_subset(program)
         # First generate the main body statements so self._used_helpers is populated
         body_lines = self.gen_block_body(program.body)
+
 
         parts: list[str] = [C_RUNTIME_HEADER]
 

@@ -54,6 +54,14 @@ class CmmRuntimeError(CmmError):
         super().__init__("runtime", code, message, line, col)
 
 
+class TranspileError(CmmError):
+    """Error raised during transpilation or code generation."""
+
+    def __init__(self, code: str, message: str, line: int, col: int) -> None:
+        """Initialize a transpile error."""
+        super().__init__("transpile", code, message, line, col)
+
+
 def format_error(err: CmmError, path: str, source_lines: list[str]) -> str:
     """Return the exact 3-line text of §10.1 (including the final newline).
 

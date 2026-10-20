@@ -29,7 +29,7 @@ def run_cmm(*args: str, env: dict[str, str] | None = None) -> subprocess.Complet
 def test_version_flag() -> None:
     res = run_cmm("--version")
     assert res.returncode == 0
-    assert res.stdout == "cmm 0.1.0\n"
+    assert res.stdout == "cmm 0.2.0\n"
     assert res.stderr == ""
 
 
