@@ -1,158 +1,394 @@
 // ============================================================================
-// C-- Comprehensive Language Showcase & Self-Test Program
+// C-- Comprehensive Language Showcase & Self-Test Program (v0.2.0)
 // ============================================================================
-// This program exercises all core features of C-- (version 0.1.0):
-// - Types: int (64-bit), float (64-bit double), bool, string
-// - Variables: immutable 'let' and mutable 'mut'
-// - Lexical scoping and inner block shadowing
-// - Arithmetic: +, -, *, /, % (with truncating division & C99 modulo)
-// - Mixed int/float automatic widening
-// - Comparison operators: <, <=, >, >=, ==, !=
-// - Logical operators: &&, ||, ! (with short-circuiting)
-// - Control flow: if / else if / else
-// - Loops: while, do-while, and for
-// - Output formatting via print(...)
+// This program showcases all features of C-- v0.2.0:
+//
+// 1. Module structure and first-class functions (typed params, return types)
+// 2. Recursion with safety limits
+// 3. Primitive types: int (64-bit), float (64-bit IEEE), bool, string
+// 4. Immutability by default ('let') and explicit mutability ('mut')
+// 5. Lexical scoping and block-level variable shadowing
+// 6. Strings: escape sequences, triple-quoted multiline strings, indexing, .len()
+// 7. Fixed-size arrays: array<T>(size, fill) and array literals [x, y, z]
+// 8. Dynamic lists: list<T>() with push, pop, insert, remove, contains, clear
+// 9. LIFO stacks: stack<T>() with push, pop, peek, is_empty, len
+// 10. FIFO queues: queue<T>() with enqueue, dequeue, peek, is_empty, len
+// 11. Deep-copy value semantics on collection assignment and function passing
+// 12. Control flow: if / else if / else
+// 13. Multi-branch switch statements (int and string matching with default)
+// 14. Loops: while, do-while, and for (with isolated loop variable scopes)
+// 15. Checked arithmetic, truncating division, and mixed int/float widening
+// 16. Standard library parsing helpers: parse_int() and parse_float()
 // ============================================================================
 
 module main;
 
+// ----------------------------------------------------------------------------
+// Section A: Function Definitions
+// ----------------------------------------------------------------------------
+
+// A simple pure function taking two 64-bit integers and returning their sum.
+fn add(a: int, b: int) -> int {
+    return a + b;
+}
+
+// A recursive function computing factorial. Demonstrates function call frames.
+fn factorial(n: int) -> int {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+// A void function (no return type) with an early return guard.
+fn greet(name: string, is_vip: bool) {
+    if (is_vip) {
+        print("Welcome, honored VIP:");
+        print(name);
+        return;
+    }
+    print("Welcome:");
+    print(name);
+}
+
+// Demonstrates that collections in C-- have deep-copy value semantics.
+// Making a mutable copy and modifying it inside will NOT affect the caller's copy.
+fn test_pass_by_value(items: list<int>) {
+    mut local_copy = items;
+    local_copy.push(999);
+    print("Inside function, local_copy length is:");
+    print(local_copy.len());
+}
+
+
+// ----------------------------------------------------------------------------
+// Section B: Main Program Entry Point
+// ----------------------------------------------------------------------------
+
 fn main() {
-    /* ----------------------------------------------------
-       1. Basic Types & Output
-       ---------------------------------------------------- */
-    print("--- 1. Basic Types & Output ---");
-    let msg = "Hello from C--!";
+    // ------------------------------------------------------------------------
+    // 1. Primitive Types & Immutability ('let' vs 'mut')
+    // ------------------------------------------------------------------------
+    print("=== 1. Primitive Types & Immutability ===");
+
+    // 'let' binds an immutable constant that cannot be modified
     let answer = 42;
-    let pi_approx = 3.14159;
-    let is_ready = true;
+    let pi_val = 3.14159;
+    let active = true;
+    let greeting = "Hello, C-- v0.2.0!";
 
-    print(msg);
+    print(greeting);
     print(answer);
-    print(pi_approx);
-    print(is_ready);
+    print(pi_val);
+    print(active);
 
-    /* ----------------------------------------------------
-       2. Integer Arithmetic & 64-bit Boundary Handling
-       ---------------------------------------------------- */
-    print("--- 2. Integer Arithmetic ---");
-    let sum = 100 + 200;
-    let diff = 50 - 80;
-    let prod = 12 * 12;
-    let div_pos = 7 / 2;     // Truncating division towards zero -> 3
-    let div_neg = -7 / 2;    // Truncates towards zero -> -3
-    let mod_pos = 7 % 3;     // Remainder with dividend sign -> 1
-    let mod_neg = -7 % 3;    // Remainder with dividend sign -> -1
+    // 'mut' declares a mutable variable allowed to receive assignments
+    mut counter = 0;
+    counter += 10;
+    counter *= 2;
+    counter -= 5;
+    print("Mutable counter after arithmetic:");
+    print(counter); // 15
 
-    print(sum);
-    print(diff);
-    print(prod);
-    print(div_pos);
-    print(div_neg);
-    print(mod_pos);
-    print(mod_neg);
+    // ------------------------------------------------------------------------
+    // 2. User-Defined Functions & Recursion
+    // ------------------------------------------------------------------------
+    print("=== 2. Functions & Recursion ===");
 
-    /* ----------------------------------------------------
-       3. Floats, Mixed Arithmetic & §9.1 Formatting
-       ---------------------------------------------------- */
-    print("--- 3. Floats & Mixed Operations ---");
-    let f1 = 2.0;
-    let f2 = 0.1 + 0.2;       // IEEE-754 precision showcase
-    let f3 = 10 / 4.0;        // Mixed int / float -> 2.5
-    let f4 = 1.0 / 3.0;
-    let neg_zero = -0.0;
+    let sum_result = add(15, 27);
+    print("Result of add(15, 27):");
+    print(sum_result); // 42
 
-    print(f1);
-    print(f2);
-    print(f3);
-    print(f4);
-    print(neg_zero);
+    let fact_5 = factorial(5);
+    print("Result of factorial(5):");
+    print(fact_5); // 120
 
-    /* ----------------------------------------------------
-       4. Booleans, Relational & Logical Operators
-       ---------------------------------------------------- */
-    print("--- 4. Comparisons & Logic ---");
-    print(10 < 20);
-    print(10 >= 10);
-    print(3 == 3.0);          // Mixed int/float equality -> true
-    print("apple" == "apple");
-    print("apple" != "banana");
-    print(!false);
-    print(true && (1 < 2));
-    print(false || true);
+    greet("Alice", true);
+    greet("Bob", false);
 
-    /* ----------------------------------------------------
-       5. Variable Mutability ('mut') & Compound Assignment
-       ---------------------------------------------------- */
-    print("--- 5. Mutability & Compound Assignment ---");
-    mut acc = 10;
-    acc += 5;
-    acc *= 2;
-    acc -= 6;
-    acc /= 4;
-    acc %= 5;
-    print(acc);
+    // ------------------------------------------------------------------------
+    // 3. Strings: Multiline Text, Indexing & Length
+    // ------------------------------------------------------------------------
+    print("=== 3. Strings ===");
 
-    /* ----------------------------------------------------
-       6. Scoping & Variable Shadowing
-       ---------------------------------------------------- */
-    print("--- 6. Scoping & Shadowing ---");
-    let x = 100;
-    {
-        // Initializer evaluates in outer scope, then inner 'x' shadows
-        let x = x + 50;
-        print(x);             // Prints 150
-        {
-            let x = "shadowed as string";
-            print(x);
+    let text = "C-- Language";
+    print("String length:");
+    print(text.len()); // 12
+
+    // Single-character indexing returns a 1-character string
+    print("First character text[0]:");
+    print(text[0]); // "C"
+    print("Fourth character text[4]:");
+    print(text[4]); // "L"
+
+    // Triple-quoted strings support newlines and multiline formatting
+    let banner = """
+    +-----------------------+
+    | C-- Safety By Removal |
+    +-----------------------+
+    """;
+    print(banner);
+
+    // ------------------------------------------------------------------------
+    // 4. Fixed-Size Arrays (array<T>) & Array Literals
+    // ------------------------------------------------------------------------
+    print("=== 4. Fixed-Size Arrays ===");
+
+    // Construct a 5-element array filled with zeros: array<T>(size, fill)
+    mut numbers = array<int>(5, 0);
+    print("Initial array length:");
+    print(numbers.len()); // 5
+
+    // Index assignment
+    numbers[0] = 100;
+    numbers[1] = 200;
+    numbers[4] = 500;
+    print("numbers[0] and numbers[4]:");
+    print(numbers[0]); // 100
+    print(numbers[4]); // 500
+
+    // Array literals create fixed arrays from comma-separated values
+    let primes = [2, 3, 5, 7, 11];
+    print("Array literal length and element 2:");
+    print(primes.len()); // 5
+    print(primes[2]);    // 5
+
+    // ------------------------------------------------------------------------
+    // 5. Dynamic Lists (list<T>)
+    // ------------------------------------------------------------------------
+    print("=== 5. Dynamic Lists ===");
+
+    // Construct an empty dynamic list
+    mut fruits = list<string>();
+    print("Is list empty initially?");
+    print(fruits.is_empty()); // true
+
+    // Append items to the end with .push()
+    fruits.push("apple");
+    fruits.push("banana");
+    fruits.push("cherry");
+    print("List length after pushes:");
+    print(fruits.len()); // 3
+
+    // Membership testing with .contains()
+    print("Contains 'banana'?");
+    print(fruits.contains("banana")); // true
+    print("Contains 'grape'?");
+    print(fruits.contains("grape"));  // false
+
+    // Insert an item at a specific index
+    fruits.insert(1, "blueberry");
+    print("fruits[1] after insert:");
+    print(fruits[1]); // "blueberry"
+
+    // Remove an item by index
+    let removed = fruits.remove(1);
+    print("Removed item was:");
+    print(removed); // "blueberry"
+
+    // Remove and return the last item with .pop()
+    let last_fruit = fruits.pop();
+    print("Popped last item:");
+    print(last_fruit); // "cherry"
+
+    // ------------------------------------------------------------------------
+    // 6. LIFO Stacks (stack<T>)
+    // ------------------------------------------------------------------------
+    print("=== 6. LIFO Stacks ===");
+
+    mut history = stack<string>();
+    history.push("Page 1: Home");
+    history.push("Page 2: Docs");
+    history.push("Page 3: Settings");
+
+    print("Stack length:");
+    print(history.len()); // 3
+
+    // .peek() inspects the top item without removing it
+    print("Top item via .peek():");
+    print(history.peek()); // "Page 3: Settings"
+
+    // .pop() removes and returns the top item
+    let top_page = history.pop();
+    print("Popped item:");
+    print(top_page); // "Page 3: Settings"
+    print("Stack length after pop:");
+    print(history.len()); // 2
+
+    // ------------------------------------------------------------------------
+    // 7. FIFO Queues (queue<T>)
+    // ------------------------------------------------------------------------
+    print("=== 7. FIFO Queues ===");
+
+    mut jobs = queue<int>();
+    jobs.enqueue(101);
+    jobs.enqueue(102);
+    jobs.enqueue(103);
+
+    print("Queue length:");
+    print(jobs.len()); // 3
+
+    // .peek() inspects the front item
+    print("Front job via .peek():");
+    print(jobs.peek()); // 101
+
+    // .dequeue() removes and returns the front item
+    let first_job = jobs.dequeue();
+    print("Dequeued job:");
+    print(first_job); // 101
+    print("Queue length after dequeue:");
+    print(jobs.len()); // 2
+
+    // ------------------------------------------------------------------------
+    // 8. Deep-Copy Value Semantics
+    // ------------------------------------------------------------------------
+    print("=== 8. Deep-Copy Value Semantics ===");
+
+    // In C--, collections are value types. Assigning a collection makes a deep copy!
+    mut original_list = list<int>();
+    original_list.push(1);
+    original_list.push(2);
+
+    mut cloned_list = original_list; // Independent deep copy
+    cloned_list.push(3);
+
+    print("Original list length (should remain 2):");
+    print(original_list.len()); // 2
+    print("Cloned list length (should be 3):");
+    print(cloned_list.len());   // 3
+
+    // Function parameter passing also deep-copies
+    test_pass_by_value(original_list);
+    print("Caller original list length after function call:");
+    print(original_list.len()); // Still 2!
+
+    // ------------------------------------------------------------------------
+    // 9. Multi-Branch Switch Statements
+    // ------------------------------------------------------------------------
+    print("=== 9. Switch Statements ===");
+
+    // Integer selector matching
+    let day_code = 3;
+    switch (day_code) {
+        case 1: {
+            print("Monday");
         }
-        print(x);             // Prints 150
-    }
-    print(x);                 // Prints 100
-
-    /* ----------------------------------------------------
-       7. Conditional Branches (if / else if / else)
-       ---------------------------------------------------- */
-    print("--- 7. Conditionals ---");
-    mut score = 85;
-    if (score >= 90) {
-        print("Grade: A");
-    } else if (score >= 80) {
-        print("Grade: B");
-    } else if (score >= 70) {
-        print("Grade: C");
-    } else {
-        print("Grade: F");
+        case 2: {
+            print("Tuesday");
+        }
+        case 3: {
+            print("Wednesday");
+        }
+        default: {
+            print("Other day");
+        }
     }
 
-    /* ----------------------------------------------------
-       8. While Loop
-       ---------------------------------------------------- */
-    print("--- 8. While Loop ---");
+    // String selector matching
+    let command = "start";
+    switch (command) {
+        case "stop": {
+            print("Stopping service...");
+        }
+        case "start": {
+            print("Starting service on port 8080...");
+        }
+        default: {
+            print("Unknown command");
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // 10. Lexical Scoping & Variable Shadowing
+    // ------------------------------------------------------------------------
+    print("=== 10. Scoping & Variable Shadowing ===");
+
+    let outer = 1000;
+    {
+        // Inner block shadows 'outer' with a new binding
+        let outer = outer + 500;
+        print("Inner scope 'outer':");
+        print(outer); // 1500
+
+        {
+            let outer = "deeply shadowed as string";
+            print(outer);
+        }
+
+        print("Back to inner scope 'outer':");
+        print(outer); // 1500
+    }
+    print("Back to global scope 'outer':");
+    print(outer); // 1000
+
+    // ------------------------------------------------------------------------
+    // 11. Loops: while, do-while, and for
+    // ------------------------------------------------------------------------
+    print("=== 11. Loops ===");
+
+    // while loop: condition checked before each iteration
+    print("Counting down with while loop:");
     mut countdown = 3;
     while (countdown > 0) {
         print(countdown);
         countdown -= 1;
     }
 
-    /* ----------------------------------------------------
-       9. Do-While Loop (runs at least once)
-       ---------------------------------------------------- */
-    print("--- 9. Do-While Loop ---");
-    mut ran = 0;
+    // do-while loop: guaranteed to execute body at least once
+    print("Executing do-while loop:");
+    mut step = 0;
     do {
-        ran += 1;
-        print("do-while executed");
-    } while (ran < 1);
+        step += 1;
+        print("do-while body executed once");
+    } while (step < 1);
 
-    /* ----------------------------------------------------
-       10. For Loop (Sum of 1 to 5)
-       ---------------------------------------------------- */
-    print("--- 10. For Loop ---");
-    mut total = 0;
+    // for loop: initialization, condition, and update
+    print("Summing numbers 1 to 5 with for loop:");
+    mut sum_for = 0;
     for (mut i = 1; i <= 5; i += 1) {
-        total += i;
+        sum_for += i;
     }
-    print(total);             // 1 + 2 + 3 + 4 + 5 = 15
+    print("Sum is:");
+    print(sum_for); // 15
 
-    print("--- All Showcase Tests Passed Successfully! ---");
+    // ------------------------------------------------------------------------
+    // 12. Standard Library Parsing Helpers
+    // ------------------------------------------------------------------------
+    print("=== 12. Standard Library Parsing ===");
+
+    // parse_int converts a string to a 64-bit signed integer
+    let parsed_int = parse_int(" 123456 ");
+    print("Parsed int:");
+    print(parsed_int + 1); // 123457
+
+    // parse_float converts a string to a 64-bit double precision float
+    let parsed_float = parse_float(" 3.14159 ");
+    print("Parsed float:");
+    print(parsed_float * 2.0); // 6.28318
+
+    // ------------------------------------------------------------------------
+    // 13. Arithmetic Precision & Overflow Protection
+    // ------------------------------------------------------------------------
+    print("=== 13. Checked Arithmetic ===");
+
+    // Truncating integer division toward zero
+    print("7 / 2 (truncates toward zero):");
+    print(7 / 2);  // 3
+    print("-7 / 2 (truncates toward zero):");
+    print(-7 / 2); // -3
+
+    // Remainder operator (%) preserves dividend sign
+    print("7 % 3:");
+    print(7 % 3);  // 1
+    print("-7 % 3:");
+    print(-7 % 3); // -1
+
+    // Automatic int -> float widening in mixed expressions
+    let mixed_calc = 10 / 4.0;
+    print("10 / 4.0 (automatic float widening):");
+    print(mixed_calc); // 2.5
+
+    print("======================================================");
+    print("C-- v0.2.0 Complete Showcase Executed Successfully!");
+    print("======================================================");
 }

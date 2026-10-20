@@ -344,7 +344,7 @@ class Interpreter:
             self._set_var(assign.name, copy_value(new_val), assign.line, assign.col)
 
     def _execute_index_assign(self, assign: IndexAssign) -> None:
-        target_val = self._eval_expr(assign.target)
+        target_val = self._get_var(assign.name, assign.line, assign.col)
         idx_val = self._eval_expr(assign.index)
         rhs_val = copy_value(self._eval_expr(assign.value))
 
