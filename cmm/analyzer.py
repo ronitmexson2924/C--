@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Any
 from cmm.ast_nodes import (
     ArrayLiteral,
     Assign,
@@ -34,6 +34,7 @@ from cmm.ast_nodes import (
 )
 from cmm.builtins import BUILTIN_FUNCTION_NAMES, COLLECTION_METHODS
 from cmm.errors import SemanticError
+from cmm.suggest import find_suggestion
 from cmm.types import (
     BINARY_OPERATORS,
     Symbol,
@@ -67,8 +68,21 @@ class SemanticAnalyzer:
         if self._scopes:
             self._scopes[-1][name] = symbol
 
-    def _record_error(self, code: str, message: str, line: int, col: int) -> None:
-        self._errors.append(SemanticError(code, message, line, col))
+    def _visible_variable_names(self) -> list[str]:
+        names: list[str] = []
+        for scope in self._scopes:
+            names.extend(scope.keys())
+        return names
+
+    def _record_error(
+        self,
+        code: str,
+        message: str,
+        line: int,
+        col: int,
+        details: Optional[dict[str, Any]] = None,
+    ) -> None:
+        self._errors.append(SemanticError(code, message, line, col, details=details))
 
     def analyze_program(self, program: Program) -> list[SemanticError]:
         """Analyze full program per §A8.3."""
@@ -76,19 +90,19 @@ class SemanticAnalyzer:
         for fn in program.functions:
             fn_name = fn.name
             if fn_name in BUILTIN_FUNCTION_NAMES:
-                self._record_error("E010", f"cannot redefine built-in function '{fn_name}'", fn.line, fn.col)
+                self._record_error("E010", f"cannot redefine built-in function '{fn_name}'", fn.line, fn.col, details={"name": fn_name, "token_len": len(fn_name)})
             elif fn_name in self._functions:
-                self._record_error("E009", f"function '{fn_name}' is already defined", fn.line, fn.col)
+                self._record_error("E009", f"function '{fn_name}' is already defined", fn.line, fn.col, details={"name": fn_name, "token_len": len(fn_name)})
             else:
                 self._functions[fn_name] = fn
 
         # Verify 'main' exists and signature
         if "main" not in self._functions:
-            self._record_error("E008", "undefined function 'main'", program.line, program.col)
+            self._record_error("E008", "undefined function 'main'", program.line, program.col, details={"name": "main", "token_len": 4})
         else:
             main_fn = self._functions["main"]
             if len(main_fn.params) > 0 or main_fn.ret_type is not None:
-                self._record_error("E017", "'main' must have no parameters and no return type", main_fn.line, main_fn.col)
+                self._record_error("E017", "'main' must have no parameters and no return type", main_fn.line, main_fn.col, details={"name": "main", "token_len": 4})
 
         # Pass 2: Check each function body
         for fn in program.functions:
@@ -105,7 +119,7 @@ class SemanticAnalyzer:
         param_names: set[str] = set()
         for p in fn.params:
             if p.name in param_names:
-                self._record_error("E031", f"duplicate parameter '{p.name}'", p.line, p.col)
+                self._record_error("E031", f"duplicate parameter '{p.name}'", p.line, p.col, details={"name": p.name, "token_len": len(p.name)})
             else:
                 param_names.add(p.name)
                 # Parameters are immutable bindings (like 'let')
@@ -118,7 +132,13 @@ class SemanticAnalyzer:
         # Check definitely returns rule (§A6.1.8)
         if fn.ret_type is not None:
             if not self._definitely_returns(fn.body):
-                self._record_error("E013", f"function '{fn.name}' does not return a value on all paths", fn.line, fn.col)
+                self._record_error(
+                    "E013",
+                    f"function '{fn.name}' does not return a value on all paths",
+                    fn.name_line,
+                    fn.name_col,
+                    details={"name": fn.name, "ret": str(fn.ret_type), "token_len": len(fn.name)},
+                )
 
     def _definitely_returns(self, stmt: Stmt) -> bool:
         """Conservative 'definitely returns' checker per §A6.1.8."""
@@ -186,6 +206,7 @@ class SemanticAnalyzer:
                 f"variable '{stmt.name}' is already declared in this scope (at line {existing.decl_line}, column {existing.decl_col})",
                 stmt.name_line,
                 stmt.name_col,
+                details={"name": stmt.name, "decl_line": existing.decl_line, "decl_col": existing.decl_col, "token_len": len(stmt.name)},
             )
         else:
             self._define(stmt.name, Symbol(type=init_type, mutable=stmt.mutable, decl_line=stmt.name_line, decl_col=stmt.name_col))
@@ -194,7 +215,8 @@ class SemanticAnalyzer:
         symbol = self._lookup(stmt.name)
         val_type = self._analyze_expr(stmt.value)
         if symbol is None:
-            self._record_error("E001", f"undeclared variable '{stmt.name}'", stmt.line, stmt.col)
+            sugg = find_suggestion(stmt.name, self._visible_variable_names())
+            self._record_error("E001", f"undeclared variable '{stmt.name}'", stmt.line, stmt.col, details={"name": stmt.name, "token_len": len(stmt.name), "suggestion": sugg})
             return
 
         if not symbol.mutable:
@@ -203,6 +225,7 @@ class SemanticAnalyzer:
                 f"cannot assign to immutable variable '{stmt.name}' (declared with 'let' at line {symbol.decl_line}, column {symbol.decl_col}); declare it with 'mut' to allow assignment",
                 stmt.line,
                 stmt.col,
+                details={"name": stmt.name, "decl_line": symbol.decl_line, "decl_col": symbol.decl_col, "token_len": len(stmt.name)},
             )
             return
 
@@ -216,6 +239,7 @@ class SemanticAnalyzer:
                     f"cannot assign value of type {val_type} to variable '{stmt.name}' of type {symbol.type}",
                     stmt.line,
                     stmt.col,
+                    details={"name": stmt.name, "ltype": str(symbol.type), "rtype": str(val_type), "token_len": len(stmt.name)},
                 )
         else:
             from cmm.types import COMPOUND_TO_BINARY
@@ -226,6 +250,7 @@ class SemanticAnalyzer:
                     f"operator '{stmt.op}' cannot be applied to {symbol.type} and {val_type}",
                     stmt.op_line,
                     stmt.op_col,
+                    details={"op": stmt.op, "ltype": str(symbol.type), "rtype": str(val_type), "token_len": len(stmt.op)},
                 )
             else:
                 op_result = BINARY_OPERATORS[(base_op, symbol.type, val_type)]
@@ -235,6 +260,7 @@ class SemanticAnalyzer:
                         f"cannot assign value of type {op_result} to variable '{stmt.name}' of type {symbol.type}",
                         stmt.line,
                         stmt.col,
+                        details={"name": stmt.name, "ltype": str(symbol.type), "rtype": str(op_result), "token_len": len(stmt.name)},
                     )
 
     def _analyze_index_assign(self, stmt: IndexAssign) -> None:
@@ -243,23 +269,24 @@ class SemanticAnalyzer:
         val_type = self._analyze_expr(stmt.value)
 
         if symbol is None:
-            self._record_error("E001", f"undeclared variable '{stmt.name}'", stmt.line, stmt.col)
+            sugg = find_suggestion(stmt.name, self._visible_variable_names())
+            self._record_error("E001", f"undeclared variable '{stmt.name}'", stmt.line, stmt.col, details={"name": stmt.name, "token_len": len(stmt.name), "suggestion": sugg})
             return
 
         if symbol.type == Type.STRING:
-            self._record_error("E030", "strings are immutable; cannot assign to an element", stmt.line, stmt.col)
+            self._record_error("E030", "strings are immutable; cannot assign to an element", stmt.line, stmt.col, details={"v": stmt.name, "token_len": len(stmt.name)})
             return
 
         if not symbol.mutable:
-            self._record_error("E029", f"cannot assign to element of immutable variable '{stmt.name}'", stmt.line, stmt.col)
+            self._record_error("E029", f"cannot assign to element of immutable variable '{stmt.name}'", stmt.line, stmt.col, details={"v": stmt.name, "token_len": len(stmt.name)})
             return
 
         if symbol.type.name not in ("array", "list"):
-            self._record_error("E024", f"type {symbol.type} cannot be indexed", stmt.line, stmt.col)
+            self._record_error("E024", f"type {symbol.type} cannot be indexed", stmt.line, stmt.col, details={"type": str(symbol.type), "token_len": len(stmt.name)})
             return
 
         if idx_type != Type.INT and idx_type != Type.INVALID:
-            self._record_error("E025", f"index must be int, got {idx_type}", stmt.index.start_line, stmt.index.start_col)
+            self._record_error("E025", f"index must be int, got {idx_type}", stmt.index.start_line, stmt.index.start_col, details={"type": str(idx_type), "token_len": 1})
 
         elem_type = symbol.type.elem if symbol.type.elem else Type.INVALID
         if elem_type == Type.INVALID or val_type == Type.INVALID:
@@ -272,16 +299,17 @@ class SemanticAnalyzer:
                     f"cannot assign value of type {val_type} to variable '{stmt.name}' of type {elem_type}",
                     stmt.line,
                     stmt.col,
+                    details={"name": stmt.name, "ltype": str(elem_type), "rtype": str(val_type), "token_len": len(stmt.name)},
                 )
         else:
             from cmm.types import COMPOUND_TO_BINARY
             base_op = COMPOUND_TO_BINARY[stmt.op]
             if (base_op, elem_type, val_type) not in BINARY_OPERATORS:
-                self._record_error("E006", f"operator '{stmt.op}' cannot be applied to {elem_type} and {val_type}", stmt.op_line, stmt.op_col)
+                self._record_error("E006", f"operator '{stmt.op}' cannot be applied to {elem_type} and {val_type}", stmt.op_line, stmt.op_col, details={"op": stmt.op, "ltype": str(elem_type), "rtype": str(val_type), "token_len": len(stmt.op)})
             else:
                 op_result = BINARY_OPERATORS[(base_op, elem_type, val_type)]
                 if op_result != elem_type:
-                    self._record_error("E007", f"cannot assign value of type {op_result} to variable '{stmt.name}' of type {elem_type}", stmt.line, stmt.col)
+                    self._record_error("E007", f"cannot assign value of type {op_result} to variable '{stmt.name}' of type {elem_type}", stmt.line, stmt.col, details={"name": stmt.name, "ltype": str(elem_type), "rtype": str(op_result), "token_len": len(stmt.name)})
 
 
     def _analyze_call_stmt(self, stmt: CallStmt) -> None:
@@ -298,11 +326,11 @@ class SemanticAnalyzer:
             # Void function
             if stmt.expr is not None:
                 self._analyze_expr(stmt.expr)
-                self._record_error("E014", f"void function '{self._current_function.name}' cannot return a value", stmt.line, stmt.col)
+                self._record_error("E014", f"void function '{self._current_function.name}' cannot return a value", stmt.line, stmt.col, details={"name": self._current_function.name, "token_len": 6})
         else:
             # Non-void function
             if stmt.expr is None:
-                self._record_error("E015", f"function '{self._current_function.name}' must return a value of type {self._current_function.ret_type}", stmt.line, stmt.col)
+                self._record_error("E015", f"function '{self._current_function.name}' must return a value of type {self._current_function.ret_type}", stmt.line, stmt.col, details={"name": self._current_function.name, "ret": str(self._current_function.ret_type), "token_len": 6})
             else:
                 ret_val_type = self._analyze_expr(stmt.expr)
                 if ret_val_type != Type.INVALID and ret_val_type != self._current_function.ret_type:
@@ -311,12 +339,13 @@ class SemanticAnalyzer:
                         f"cannot return {ret_val_type} from function '{self._current_function.name}' declared to return {self._current_function.ret_type}",
                         stmt.expr.start_line,
                         stmt.expr.start_col,
+                        details={"name": self._current_function.name, "expected_ret": str(self._current_function.ret_type), "got_ret": str(ret_val_type), "token_len": 6},
                     )
 
     def _analyze_if(self, stmt: If) -> None:
         cond_type = self._analyze_expr(stmt.cond)
         if cond_type != Type.BOOL and cond_type != Type.INVALID:
-            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col)
+            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col, details={"type": str(cond_type), "token_len": 1})
         self._analyze_block(stmt.then_block)
         if stmt.else_branch is not None:
             if isinstance(stmt.else_branch, Block):
@@ -327,14 +356,14 @@ class SemanticAnalyzer:
     def _analyze_while(self, stmt: While) -> None:
         cond_type = self._analyze_expr(stmt.cond)
         if cond_type != Type.BOOL and cond_type != Type.INVALID:
-            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col)
+            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col, details={"type": str(cond_type), "token_len": 1})
         self._analyze_block(stmt.body)
 
     def _analyze_do_while(self, stmt: DoWhile) -> None:
         self._analyze_block(stmt.body)
         cond_type = self._analyze_expr(stmt.cond)
         if cond_type != Type.BOOL and cond_type != Type.INVALID:
-            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col)
+            self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col, details={"type": str(cond_type), "token_len": 1})
 
     def _analyze_for(self, stmt: For) -> None:
         self._push_scope()
@@ -350,7 +379,7 @@ class SemanticAnalyzer:
             if stmt.cond is not None:
                 cond_type = self._analyze_expr(stmt.cond)
                 if cond_type != Type.BOOL and cond_type != Type.INVALID:
-                    self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col)
+                    self._record_error("E004", f"condition must be of type bool, found {cond_type}", stmt.cond.start_line, stmt.cond.start_col, details={"type": str(cond_type), "token_len": 1})
 
             if stmt.update is not None:
                 if isinstance(stmt.update, Assign):
@@ -365,17 +394,17 @@ class SemanticAnalyzer:
     def _analyze_switch_stmt(self, stmt: SwitchStmt) -> None:
         sel_type = self._analyze_expr(stmt.selector)
         if sel_type != Type.INVALID and sel_type not in (Type.INT, Type.STRING):
-            self._record_error("E021", f"switch selector must be int or string, got {sel_type}", stmt.selector.start_line, stmt.selector.start_col)
+            self._record_error("E021", f"switch selector must be int or string, got {sel_type}", stmt.selector.start_line, stmt.selector.start_col, details={"type": str(sel_type), "token_len": 1})
 
         seen_values: set[object] = set()
         for clause in stmt.cases:
             for val_expr in clause.values:
                 val_type = self._analyze_expr(val_expr)
                 if sel_type in (Type.INT, Type.STRING) and val_type != Type.INVALID and val_type != sel_type:
-                    self._record_error("E022", f"case value of type {val_type} does not match switch selector of type {sel_type}", val_expr.start_line, val_expr.start_col)
+                    self._record_error("E022", f"case value of type {val_type} does not match switch selector of type {sel_type}", val_expr.start_line, val_expr.start_col, details={"case_type": str(val_type), "selector_type": str(sel_type), "token_len": 1})
                 if isinstance(val_expr, Literal):
                     if val_expr.value in seen_values:
-                        self._record_error("E023", f"duplicate case value {val_expr.value}", val_expr.line, val_expr.col)
+                        self._record_error("E023", f"duplicate case value {val_expr.value}", val_expr.line, val_expr.col, details={"val": str(val_expr.value), "token_len": 1})
                     else:
                         seen_values.add(val_expr.value)
             self._analyze_block(clause.body)
@@ -402,7 +431,8 @@ class SemanticAnalyzer:
         elif isinstance(expr, Variable):
             sym = self._lookup(expr.name)
             if sym is None:
-                self._record_error("E001", f"undeclared variable '{expr.name}'", expr.line, expr.col)
+                sugg = find_suggestion(expr.name, self._visible_variable_names())
+                self._record_error("E001", f"undeclared variable '{expr.name}'", expr.line, expr.col, details={"name": expr.name, "token_len": len(expr.name), "suggestion": sugg})
                 return Type.INVALID
             return sym.type
 
@@ -416,6 +446,7 @@ class SemanticAnalyzer:
                     f"operator '{expr.op}' cannot be applied to {operand_type}",
                     expr.line,
                     expr.col,
+                    details={"op": expr.op, "type": str(operand_type), "token_len": len(expr.op)},
                 )
                 return Type.INVALID
             return UNARY_OPERATORS[(expr.op, operand_type)]
@@ -432,6 +463,7 @@ class SemanticAnalyzer:
                     f"operator '{expr.op}' cannot be applied to {left_type} and {right_type}",
                     expr.line,
                     expr.col,
+                    details={"op": expr.op, "ltype": str(left_type), "rtype": str(right_type), "token_len": len(expr.op)},
                 )
                 return Type.INVALID
             return BINARY_OPERATORS[(expr.op, left_type, right_type)]
@@ -448,11 +480,11 @@ class SemanticAnalyzer:
             idx_type = self._analyze_expr(expr.index)
 
             if target_type != Type.INVALID and not target_type.is_indexable():
-                self._record_error("E024", f"type {target_type} cannot be indexed", expr.line, expr.col)
+                self._record_error("E024", f"type {target_type} cannot be indexed", expr.line, expr.col, details={"type": str(target_type), "token_len": 1})
                 return Type.INVALID
 
             if idx_type != Type.INVALID and idx_type != Type.INT:
-                self._record_error("E025", f"index must be int, got {idx_type}", expr.index.start_line, expr.index.start_col)
+                self._record_error("E025", f"index must be int, got {idx_type}", expr.index.start_line, expr.index.start_col, details={"type": str(idx_type), "token_len": 1})
 
             if target_type == Type.STRING:
                 return Type.STRING
@@ -466,12 +498,12 @@ class SemanticAnalyzer:
             elem_types = [self._analyze_expr(e) for e in expr.elements]
             t0 = elem_types[0]
             if not t0.is_primitive() and t0 != Type.INVALID:
-                self._record_error("E027", "array literal elements must all have the same primitive type", expr.elements[0].start_line, expr.elements[0].start_col)
+                self._record_error("E027", "array literal elements must all have the same primitive type", expr.elements[0].start_line, expr.elements[0].start_col, details={"token_len": 1})
                 return Type.INVALID
 
             for i, et in enumerate(elem_types[1:], start=1):
                 if et != t0 and et != Type.INVALID:
-                    self._record_error("E027", "array literal elements must all have the same primitive type", expr.elements[i].start_line, expr.elements[i].start_col)
+                    self._record_error("E027", "array literal elements must all have the same primitive type", expr.elements[i].start_line, expr.elements[i].start_col, details={"token_len": 1})
                     return Type.INVALID
 
             return Type.coll("array", t0)
@@ -480,15 +512,15 @@ class SemanticAnalyzer:
             arg_types = [self._analyze_expr(a) for a in expr.args]
             if expr.kind == "array":
                 if len(arg_types) != 2:
-                    self._record_error("E011", f"constructor 'array' expects 2 argument(s), got {len(arg_types)}", expr.line, expr.col)
+                    self._record_error("E011", f"constructor 'array' expects 2 argument(s), got {len(arg_types)}", expr.line, expr.col, details={"name": "array", "kind": "constructor", "expected_count": 2, "got_count": len(arg_types), "token_len": 5})
                 else:
                     if arg_types[0] != Type.INT and arg_types[0] != Type.INVALID:
-                        self._record_error("E012", f"argument 1 of constructor 'array' must be int, got {arg_types[0]}", expr.args[0].start_line, expr.args[0].start_col)
+                        self._record_error("E012", f"argument 1 of constructor 'array' must be int, got {arg_types[0]}", expr.args[0].start_line, expr.args[0].start_col, details={"name": "array", "kind": "constructor", "arg_idx": 1, "expected_type": "int", "got_type": str(arg_types[0]), "token_len": 1})
                     if arg_types[1] != expr.elem_type and arg_types[1] != Type.INVALID:
-                        self._record_error("E012", f"argument 2 of constructor 'array' must be {expr.elem_type}, got {arg_types[1]}", expr.args[1].start_line, expr.args[1].start_col)
+                        self._record_error("E012", f"argument 2 of constructor 'array' must be {expr.elem_type}, got {arg_types[1]}", expr.args[1].start_line, expr.args[1].start_col, details={"name": "array", "kind": "constructor", "arg_idx": 2, "expected_type": str(expr.elem_type), "got_type": str(arg_types[1]), "token_len": 1})
             elif expr.kind in ("list", "stack", "queue"):
                 if len(arg_types) != 0:
-                    self._record_error("E011", f"constructor '{expr.kind}' expects 0 argument(s), got {len(arg_types)}", expr.line, expr.col)
+                    self._record_error("E011", f"constructor '{expr.kind}' expects 0 argument(s), got {len(arg_types)}", expr.line, expr.col, details={"name": expr.kind, "kind": "constructor", "expected_count": 0, "got_count": len(arg_types), "token_len": len(expr.kind)})
 
             return Type.coll(expr.kind, expr.elem_type)
 
@@ -499,7 +531,7 @@ class SemanticAnalyzer:
         arg_types = [self._analyze_expr(a) for a in call.args]
 
         if name == "main":
-            self._record_error("E019", "'main' cannot be called", call.line, call.col)
+            self._record_error("E019", "'main' cannot be called", call.line, call.col, details={"name": "main", "token_len": 4})
             return Type.INVALID
 
         if name in BUILTIN_FUNCTION_NAMES:
@@ -508,36 +540,37 @@ class SemanticAnalyzer:
                     ret_t = Type.STRING
                 elif len(arg_types) == 1:
                     if arg_types[0] != Type.STRING and arg_types[0] != Type.INVALID:
-                        self._record_error("E012", f"argument 1 of function 'input' must be string, got {arg_types[0]}", call.args[0].start_line, call.args[0].start_col)
+                        self._record_error("E012", f"argument 1 of function 'input' must be string, got {arg_types[0]}", call.args[0].start_line, call.args[0].start_col, details={"name": "input", "kind": "function", "arg_idx": 1, "expected_type": "string", "got_type": str(arg_types[0]), "token_len": 1})
                     ret_t = Type.STRING
                 else:
-                    self._record_error("E011", f"function 'input' expects 1 argument(s), got {len(arg_types)}", call.line, call.col)
+                    self._record_error("E011", f"function 'input' expects 1 argument(s), got {len(arg_types)}", call.line, call.col, details={"name": "input", "kind": "function", "expected_count": 1, "got_count": len(arg_types), "token_len": 5})
                     ret_t = Type.STRING
             elif name in ("parse_int", "parse_float"):
                 exp_t = Type.INT if name == "parse_int" else Type.FLOAT
                 if len(arg_types) != 1:
-                    self._record_error("E011", f"function '{name}' expects 1 argument(s), got {len(arg_types)}", call.line, call.col)
+                    self._record_error("E011", f"function '{name}' expects 1 argument(s), got {len(arg_types)}", call.line, call.col, details={"name": name, "kind": "function", "expected_count": 1, "got_count": len(arg_types), "token_len": len(name)})
                 else:
                     if arg_types[0] != Type.STRING and arg_types[0] != Type.INVALID:
-                        self._record_error("E012", f"argument 1 of function '{name}' must be string, got {arg_types[0]}", call.args[0].start_line, call.args[0].start_col)
+                        self._record_error("E012", f"argument 1 of function '{name}' must be string, got {arg_types[0]}", call.args[0].start_line, call.args[0].start_col, details={"name": name, "kind": "function", "arg_idx": 1, "expected_type": "string", "got_type": str(arg_types[0]), "token_len": 1})
                 ret_t = exp_t
             return ret_t
 
         if name not in self._functions:
-            self._record_error("E008", f"undefined function '{name}'", call.line, call.col)
+            sugg = find_suggestion(name, list(self._functions.keys()) + list(BUILTIN_FUNCTION_NAMES))
+            self._record_error("E008", f"undefined function '{name}'", call.line, call.col, details={"name": name, "token_len": len(name), "suggestion": sugg})
             return Type.INVALID
 
         fn = self._functions[name]
         if len(arg_types) != len(fn.params):
-            self._record_error("E011", f"function '{name}' expects {len(fn.params)} argument(s), got {len(arg_types)}", call.line, call.col)
+            self._record_error("E011", f"function '{name}' expects {len(fn.params)} argument(s), got {len(arg_types)}", call.line, call.col, details={"name": name, "kind": "function", "expected_count": len(fn.params), "got_count": len(arg_types), "token_len": len(name)})
         else:
             for i, (at, p) in enumerate(zip(arg_types, fn.params), start=1):
                 if at != p.type and at != Type.INVALID:
-                    self._record_error("E012", f"argument {i} of function '{name}' must be {p.type}, got {at}", call.args[i - 1].start_line, call.args[i - 1].start_col)
+                    self._record_error("E012", f"argument {i} of function '{name}' must be {p.type}, got {at}", call.args[i - 1].start_line, call.args[i - 1].start_col, details={"name": name, "kind": "function", "arg_idx": i, "expected_type": str(p.type), "got_type": str(at), "token_len": 1})
 
         ret_type = fn.ret_type if fn.ret_type is not None else Type.VOID
         if ret_type == Type.VOID and not is_statement:
-            self._record_error("E020", f"function '{name}' returns no value and cannot be used in an expression", call.line, call.col)
+            self._record_error("E020", f"function '{name}' returns no value and cannot be used in an expression", call.line, call.col, details={"name": name, "kind": "function", "token_len": len(name)})
         return ret_type
 
     def _analyze_method_call(self, call: MethodCall, is_statement: bool = False) -> Type:
@@ -545,7 +578,8 @@ class SemanticAnalyzer:
         arg_types = [self._analyze_expr(a) for a in call.args]
 
         if receiver_sym is None:
-            self._record_error("E001", f"use of undeclared variable '{call.receiver_name}'", call.line, call.col)
+            sugg = find_suggestion(call.receiver_name, self._visible_variable_names())
+            self._record_error("E001", f"use of undeclared variable '{call.receiver_name}'", call.line, call.col, details={"name": call.receiver_name, "token_len": len(call.receiver_name), "suggestion": sugg})
             return Type.INVALID
 
         rec_type = receiver_sym.type
@@ -553,20 +587,21 @@ class SemanticAnalyzer:
         methods = COLLECTION_METHODS.get(kind, {})
 
         if call.method not in methods:
-            self._record_error("E026", f"type {rec_type} has no method '{call.method}'", call.line, call.col)
+            sugg = find_suggestion(call.method, list(methods.keys()))
+            self._record_error("E026", f"type {rec_type} has no method '{call.method}'", call.line, call.col, details={"name": call.method, "type": str(rec_type), "available_methods": ", ".join(sorted(methods.keys())), "token_len": len(call.method), "suggestion": sugg})
             return Type.INVALID
 
         sig = methods[call.method]
         if sig.mutates and not receiver_sym.mutable:
-            self._record_error("E028", f"cannot call mutating method '{call.method}' on immutable variable '{call.receiver_name}'", call.line, call.col)
+            self._record_error("E028", f"cannot call mutating method '{call.method}' on immutable variable '{call.receiver_name}'", call.line, call.col, details={"name": call.method, "v": call.receiver_name, "token_len": len(call.method)})
 
         if len(arg_types) != len(sig.param_types):
-            self._record_error("E011", f"method '{call.method}' expects {len(sig.param_types)} argument(s), got {len(arg_types)}", call.line, call.col)
+            self._record_error("E011", f"method '{call.method}' expects {len(sig.param_types)} argument(s), got {len(arg_types)}", call.line, call.col, details={"name": call.method, "kind": "method", "expected_count": len(sig.param_types), "got_count": len(arg_types), "token_len": len(call.method)})
         else:
             for i, (at, exp_pt) in enumerate(zip(arg_types, sig.param_types), start=1):
                 exp_t = rec_type.elem if exp_pt == "T" else (Type.INT if exp_pt == "int" else Type.BOOL)
                 if at != exp_t and at != Type.INVALID:
-                    self._record_error("E012", f"argument {i} of method '{call.method}' must be {exp_t}, got {at}", call.args[i - 1].start_line, call.args[i - 1].start_col)
+                    self._record_error("E012", f"argument {i} of method '{call.method}' must be {exp_t}, got {at}", call.args[i - 1].start_line, call.args[i - 1].start_col, details={"name": call.method, "kind": "method", "arg_idx": i, "expected_type": str(exp_t), "got_type": str(at), "token_len": 1})
 
         ret_t: Type
         if sig.return_type == "void":
@@ -581,7 +616,7 @@ class SemanticAnalyzer:
             ret_t = Type.INVALID
 
         if ret_t == Type.VOID and not is_statement:
-            self._record_error("E020", f"method '{call.method}' returns no value and cannot be used in an expression", call.line, call.col)
+            self._record_error("E020", f"method '{call.method}' returns no value and cannot be used in an expression", call.line, call.col, details={"name": call.method, "kind": "method", "token_len": len(call.method)})
 
         return ret_t
 

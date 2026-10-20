@@ -1,0 +1,8 @@
+R007_call_depth.cmm:3:5: runtime error: call depth limit exceeded (1000)
+  |
+3 |     rec();
+  |     ^
+what went wrong:
+  The function called itself (or others) more than 1000 levels deep.
+how to fix:
+  Check that your recursion has a base case that stops it.

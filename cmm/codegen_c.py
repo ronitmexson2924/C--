@@ -71,8 +71,13 @@ RUNTIME_ERROR_HELPER = r"""static void cmm_runtime_error(const char *msg, int li
     fflush(stdout);
     fprintf(stderr, "%s:%d:%d: runtime error: %s\n", cmm_source_path, line, col, msg);
     const char *src = (line >= 1 && line <= CMM_NUM_SOURCE_LINES) ? cmm_source_lines[line - 1] : "";
-    fprintf(stderr, "    %s\n", src);
-    fprintf(stderr, "    ");
+    int lw = 1;
+    for (int t = line; t >= 10; t /= 10) lw++;
+    for (int i = 0; i <= lw; i++) fputc(' ', stderr);
+    fprintf(stderr, "|\n");
+    fprintf(stderr, "%*d | %s\n", lw, line, src);
+    for (int i = 0; i <= lw; i++) fputc(' ', stderr);
+    fprintf(stderr, "| ");
     const char *p = src;
     for (int i = 0; i < col - 1; i++) {
         if (*p != '\0') {
@@ -90,6 +95,35 @@ RUNTIME_ERROR_HELPER = r"""static void cmm_runtime_error(const char *msg, int li
     }
     fputc('^', stderr);
     fputc('\n', stderr);
+
+    if (strcmp(msg, "integer overflow") == 0) {
+        fprintf(stderr, "what went wrong:\n");
+        fprintf(stderr, "  The arithmetic calculation produced an integer too large to fit in 64\n");
+        fprintf(stderr, "  bits.\n");
+        fprintf(stderr, "how to fix:\n");
+        fprintf(stderr, "  Check the numbers being computed to prevent exceeding integer limits.\n");
+    } else if (strcmp(msg, "division by zero") == 0) {
+        fprintf(stderr, "what went wrong:\n");
+        fprintf(stderr, "  The program attempted to divide a number by zero.\n");
+        fprintf(stderr, "how to fix:\n");
+        fprintf(stderr, "  Check that the divisor is not zero before dividing.\n");
+        fprintf(stderr, "      if (divisor != 0) {\n");
+        fprintf(stderr, "            let q = n / divisor;\n");
+        fprintf(stderr, "      }\n");
+    } else if (strcmp(msg, "modulo by zero") == 0) {
+        fprintf(stderr, "what went wrong:\n");
+        fprintf(stderr, "  The program attempted to compute remainder ('%%') with a divisor of zero.\n");
+        fprintf(stderr, "how to fix:\n");
+        fprintf(stderr, "  Check that the second number is not zero before using '%%'.\n");
+        fprintf(stderr, "      if (b != 0) {\n");
+        fprintf(stderr, "            let r = a %% b;\n");
+        fprintf(stderr, "      }\n");
+    } else if (strcmp(msg, "float overflow") == 0) {
+        fprintf(stderr, "what went wrong:\n");
+        fprintf(stderr, "  The floating point calculation produced a number too large to represent.\n");
+        fprintf(stderr, "how to fix:\n");
+        fprintf(stderr, "  Check your numbers to keep values within standard 64-bit float limits.\n");
+    }
     exit(2);
 }
 """

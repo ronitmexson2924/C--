@@ -4,7 +4,7 @@
 
 # C-- (C Minus Minus)
 
-**A high-assurance, statically checked imperative programming language designed on the principle of *"Safety by Removal"* — version 0.1.0.**
+**A high-assurance, statically checked imperative programming language designed on the principle of *"Safety by Removal"* — version 0.2.0.**
 
 [![CI Matrix](https://github.com/ronitmexson2924/compiler-mini-project/actions/workflows/ci.yml/badge.svg)](https://github.com/ronitmexson2924/compiler-mini-project/actions)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12+-blue.svg)](https://www.python.org/)
@@ -18,7 +18,7 @@
 [Installation Guide](#3-installation-guide) •
 [Quickstart & Showcase](#4-quickstart--showcase-demo) •
 [CLI Reference](#5-command-line-interface-cli) •
-[Error Rectification](#6-compiler-diagnostics--error-rectification) •
+[Error Guidance](#6-compiler-diagnostics--beginner-friendly-fix-guidance) •
 [C99 Backend](#7-c99-transpiler-backend) •
 [Security & Hardening](#8-security-audit--zero-vulnerability-guarantee) •
 [Testing](#9-testing--quality-assurance) •
@@ -37,6 +37,7 @@
 - 🔒 **Immutable by Default**: Variables declared with `let` cannot be reassigned; mutability requires an explicit `mut`.
 - ⚡ **Mandatory Initialization**: Every variable must have an initializer at declaration; uninitialized reads are impossible.
 - 🎯 **Mathematical Determinism**: Truncating integer division toward zero, checked 64-bit integer overflows, and IEEE-754 double precision float arithmetic with zero-division traps.
+- 💡 **Beginner-Friendly Diagnostics**: Plain-language explanations without compiler jargon, actionable fixes with concrete code samples, and "did you mean" typo suggestions.
 - 🚀 **Dual Execution Modes**: Instant execution via the built-in reference tree-walk interpreter, or compilation to ultra-fast, warning-free ISO C99 code for native compilation with GCC, Clang, or MSVC.
 - 📦 **Zero External Runtime Dependencies**: Standard library only; completely portable across macOS, Windows, Linux, and Docker.
 
@@ -46,15 +47,17 @@
 
 | Category | Syntax & Constructs | Specification Details |
 |:---|:---|:---|
-| **Structure** | `module <name>;`<br>`fn main() { ... }` | Single-file modules with an explicit `main` entry point. No text or statements allowed outside `fn main()`. |
-| **Data Types** | `int`, `float`, `bool`, `string` | **`int`**: 64-bit signed two's complement ($-2^{63}$ to $2^{63}-1$).<br>**`float`**: 64-bit IEEE-754 double precision.<br>**`bool`**: Strict boolean (`true`, `false`); never implicitly coerced.<br>**`string`**: UTF-8 immutable text with escape sequences (`\n`, `\t`, `\r`, `\"`, `\\`). |
-| **Variables** | `let x = <expr>;`<br>`mut y = <expr>;` | `let` declares an immutable constant binding.<br>`mut` declares a mutable variable allowed to receive reassignment. |
-| **Assignments** | `=`, `+=`, `-=`, `*=`, `/=`, `%=` | Pure statements (not expressions). Compound operators perform checked arithmetic matching the operator rules. |
-| **Scoping** | Lexical blocks `{ ... }` | Block scoping with support for inner-scope shadowing. Initializers are evaluated before binding, allowing idioms like `let x = x + 1;`. |
-| **Control Flow** | `if`, `else if`, `else` | Mandatory braces `{}`; conditions must strictly evaluate to `bool`. |
-| **Loops** | `while`, `do-while`, `for` | `while` loops, `do-while` loops (guaranteed to execute at least once), and `for (init; cond; update)` with isolated loop scopes. |
-| **Operators** | `!`, `-`<br>`*`, `/`, `%`<br>`+`, `-`<br `<`, `>`, `<=`, `>=`<br>`==`, `!=`<br>`&&`, `\|\|` | Standard C precedence; truncating division toward zero; short-circuiting `&&` and `\|\|`; automatic `int` $\rightarrow$ `float` widening in mixed expressions. |
-| **I/O** | `print(<expr>);` | Built-in output statement. Prints value followed by `\n`. Floats use shortest round-trip representation (§9.1). |
+| **Structure** | `module <name>;`<br>`fn main() { ... }` | Single-file modules with an explicit `main` entry point. Functions defined at module scope. |
+| **Functions** | `fn name(a: int) -> int { ... }` | First-class functions, typed parameters, explicit return types, void functions, recursion stack depth safeguards (1000). |
+| **Data Types** | `int`, `float`, `bool`, `string` | **`int`**: 64-bit signed two's complement.<br>**`float`**: 64-bit IEEE-754 double precision.<br>**`bool`**: Strict boolean (`true`, `false`).<br>**`string`**: UTF-8 immutable text with indexing and `.len()`. |
+| **Collections** | `array<T>(size, fill)`<br>`list<T>()`<br>`stack<T>()`<br>`queue<T>()` | Fixed-size arrays, dynamic lists, LIFO stacks, FIFO queues. Deep-copy value semantics on assignment and parameter passing. |
+| **Variables** | `let x = <expr>;`<br>`mut y = <expr>;` | `let` declares an immutable binding.<br>`mut` declares a mutable variable allowed to receive reassignment. |
+| **Assignments** | `=`, `+=`, `-=`, `*=`, `/=`, `%=` | Pure statements. Compound operators perform checked arithmetic matching the operator rules. |
+| **Scoping** | Lexical blocks `{ ... }` | Block scoping with support for inner-scope shadowing. Initializers evaluated before binding. |
+| **Control Flow** | `if`, `else if`, `else`<br>`switch (val) { case ...: ... default: ... }` | Mandatory braces `{}`; conditions must evaluate to `bool`. Multi-branch `switch` with exact type checking and duplicate protection. |
+| **Loops** | `while`, `do-while`, `for` | `while` loops, `do-while` loops (guaranteed to execute at least once), and `for (init; cond; update)`. |
+| **Operators** | `!`, `-`<br>`*`, `/`, `%`<br>`+`, `-`<br `<`, `>`, `<=`, `>=`<br>`==`, `!=`<br>`&&`, `\|\|` | Standard C precedence; truncating division toward zero; short-circuiting `&&` and `\|\|`; automatic `int` $\rightarrow$ `float` widening. |
+| **I/O & Stdlib** | `print(<expr>);`<br>`read_line()`<br>`parse_int(s)`, `parse_float(s)` | Built-in output statement, interactive stdin console reading, and robust numeric parsing helpers. |
 
 ---
 
@@ -267,43 +270,58 @@ cmm <command> [options] <file>
 
 | Command | Description | Exit Codes |
 |:---|:---|:---|
-| `cmm run <file> [--max-steps N]` | Lex, parse, type-check, and execute the program. The `--max-steps N` option bounds loop execution to prevent infinite loops (R005). | `0` (Success)<br>`1` (Static error)<br>`2` (Runtime error)<br>`3` (I/O error) |
-| `cmm check <file>` | Statically type-check a program without running it. Prints `<file>: OK` on success. | `0` (Valid)<br>`1` (Static error)<br>`3` (I/O error) |
-| `cmm tokens <file>` | Lex the source and print the stream of tokens with line:column coordinates. | `0` (Success)<br>`1` (Lexical error)<br>`3` (I/O error) |
-| `cmm ast <file>` | Parse the source and print the indented Abstract Syntax Tree (AST). | `0` (Success)<br>`1` (Syntax error)<br>`3` (I/O error) |
-| `cmm transpile <file> -o <out.c>` | Transpile C-- source code into clean, standard ISO C99 code. | `0` (Success)<br>`1` (Static error)<br>`3` (I/O error) |
-| `cmm --version` | Print compiler version string (`cmm 0.1.0`). | `0` |
+| `cmm run <file> [--max-steps N] [--no-help]` | Lex, parse, type-check, and execute the program. The `--max-steps N` option bounds loop execution (R005). Use `--no-help` to suppress extended help blocks. | `0` (Success)<br>`1` (Static error)<br>`2` (Runtime error)<br>`3` (I/O error) |
+| `cmm check <file> [--no-help]` | Statically type-check a program without running it. Prints `<file>: OK` on success. | `0` (Valid)<br>`1` (Static error)<br>`3` (I/O error) |
+| `cmm tokens <file> [--no-help]` | Lex the source and print the stream of tokens with line:column coordinates. | `0` (Success)<br>`1` (Lexical error)<br>`3` (I/O error) |
+| `cmm ast <file> [--no-help]` | Parse the source and print the indented Abstract Syntax Tree (AST). | `0` (Success)<br>`1` (Syntax error)<br>`3` (I/O error) |
+| `cmm transpile <file> -o <out.c> [--no-help]` | Transpile C-- source code into clean, standard ISO C99 code. | `0` (Success)<br>`1` (Static error)<br>`3` (I/O error) |
+| `cmm --version` | Print compiler version string (`cmm 0.2.0`). | `0` |
 | `cmm --help` / `cmm -h` | Print detailed usage documentation. | `0` |
 
 ### CLI Exit Codes
 
 - **`0`**: Success.
-- **`1`**: Static failure (lexical error L001–L012, syntax error S001–S004, semantic error E001–E007).
-- **`2`**: Runtime trap (arithmetic overflow R001, divide by zero R002, mod by zero R003, float overflow R004, step limit exceeded R005).
+- **`1`**: Static failure (lexical error L001–L012, syntax error S001–S004, semantic error E001–E031).
+- **`2`**: Runtime trap (arithmetic overflow R001, divide by zero R002, mod by zero R003, float overflow R004, step limit exceeded R005, index out of bounds R006, call depth exceeded R007, collection limits R013–R014).
 - **`3`**: File I/O error (file not found, permission denied, invalid UTF-8, directory passed as file).
 - **`4`**: Command-line usage error (invalid flag or missing arguments).
 - **`70`**: Internal compiler bug (traceback suppressed unless `CMM_DEBUG=1`).
 
 ---
 
-## 6. Compiler Diagnostics & Error Rectification
+## 6. Compiler Diagnostics & Beginner-Friendly Fix Guidance
 
-C-- features human-friendly compiler diagnostics. Every error reported to `stderr` follows a deterministic 3-line format pinpointing the exact file, line, column, source snippet, and caret pointer:
+C-- features human-friendly compiler diagnostics designed for beginners. Diagnostics follow a clear layout with line-numbered source gutters, token underlines, plain-language explanations, actionable fixes with code examples, and "did you mean" suggestions:
 
 ```text
 <path>:<line>:<col>: <kind> error: <message>
-    <source line>
-    <caret line>
+   |
+<line> | <source line>
+   |    ^^^^^
+what went wrong:
+  <plain-language explanation without compiler jargon>
+how to fix:
+  <concrete actionable fix>
+      <sample corrected code>
+  did you mean '<suggestion>'?
 ```
-Tabs in source files are visually mirrored on the caret line to ensure exact alignment in any terminal or IDE.
+
+For advanced users or tooling, passing `--no-help` restores the concise 3-line format. See [`docs/errors.md`](./docs/errors.md) for the complete reference catalog of all 60 diagnostic codes.
 
 ### Common Diagnostic Examples & Rectification
 
 #### 1. Mutating an Immutable Variable (`let`)
 ```text
 demo.cmm:4:5: semantic error: cannot assign to immutable variable 'x' (declared with 'let' at line 3, column 9); declare it with 'mut' to allow assignment
-    x = 10;
-    ^
+  |
+4 |     x = 10;
+  |     ^
+what went wrong:
+  The variable 'x' was created with 'let', which means its value cannot be
+  changed.
+how to fix:
+  Change 'let' to 'mut' where 'x' is created if you need to assign to it.
+      mut x = 0;
 ```
 > **How to Rectify**: Change the declaration from `let x = ...;` to `mut x = ...;`.
 
@@ -402,7 +420,7 @@ The C-- compiler, interpreter, and code generator have undergone a comprehensive
 
 ## 9. Testing & Quality Assurance
 
-The codebase includes an exhaustive test suite of **290 tests** validating lexical analysis, parsing, semantic analysis, float formatting, interpretation, CLI behaviors, example programs, and C99 code generation:
+The codebase includes an exhaustive test suite of **416 tests** validating lexical analysis, parsing, semantic analysis, float formatting, interpretation, CLI behaviors, example programs, v0.2 language features, beginner-friendly error diagnostics, and C99 code generation:
 
 ```bash
 # Run the complete test suite
@@ -414,13 +432,15 @@ pytest -v
 - [`tests/test_lexer.py`](./tests/test_lexer.py): 40 tests covering all tokens, keywords, operators, and lexical errors (L001–L012).
 - [`tests/test_parser.py`](./tests/test_parser.py): 46 tests covering grammar rules, operator precedence, associativity, S001–S004, and AST printing.
 - [`tests/test_analyzer.py`](./tests/test_analyzer.py): 42 tests covering scope stacks, immutable binding, cascade suppression, and E001–E007.
+- [`tests/test_v02.py`](./tests/test_v02.py): 48 tests covering functions, collections (arrays, lists, stacks, queues), switch statements, and stdlib I/O.
 - [`tests/test_formatting.py`](./tests/test_formatting.py): 26 tests covering shortest round-trip float representations (§9.1).
-- [`tests/test_interpreter.py`](./tests/test_interpreter.py): 51 tests covering truncating arithmetic, 64-bit limits, short-circuiting, and R001–R005.
+- [`tests/test_interpreter.py`](./tests/test_interpreter.py): 51 tests covering truncating arithmetic, 64-bit limits, short-circuiting, and R001–R014.
 - [`tests/test_cli.py`](./tests/test_cli.py): 39 tests covering CLI commands, exit codes (0/1/2/3/4/70), I/O handling, and debug traces.
-- [`tests/test_examples.py`](./tests/test_examples.py): 30 tests covering all 28 normative examples from Section 17 with byte-exact stdout/stderr matching, plus CRLF and UTF-8 BOM parity.
+- [`tests/test_examples.py`](./tests/test_examples.py): 30 tests covering all normative examples with byte-exact stdout/stderr matching, plus CRLF and UTF-8 BOM parity.
 - [`tests/test_codegen_c.py`](./tests/test_codegen_c.py): 16 tests covering C99 code generation, native GCC/Clang compilation, and execution parity.
+- [`tests/test_error_help.py`](./tests/test_error_help.py): 78 tests covering plain-language jargon scanner, Damerau-Levenshtein suggestions, renderer edge cases, and 59 golden error programs in [`tests/errors/`](./tests/errors/).
 
-**Status: 290 passed in 14.5s.**
+**Status: 416 passed in 8.4s.**
 
 ---
 

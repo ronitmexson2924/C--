@@ -1,0 +1,5 @@
+module m;
+fn main() {
+    mut s = stack<int>();
+    s.pop();
+}

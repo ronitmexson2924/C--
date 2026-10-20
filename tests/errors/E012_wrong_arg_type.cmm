@@ -1,0 +1,5 @@
+module m;
+fn foo(a: int) {}
+fn main() {
+    foo("hi");
+}

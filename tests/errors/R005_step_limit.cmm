@@ -1,0 +1,4 @@
+module m;
+fn main() {
+    for (mut i = 0; i < 100; i += 1) {}
+}

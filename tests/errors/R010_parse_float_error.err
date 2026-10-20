@@ -1,0 +1,10 @@
+R010_parse_float_error.cmm:3:5: runtime error: cannot convert 'abc' to float
+  |
+3 |     parse_float("abc");
+  |     ^
+what went wrong:
+  The text 'abc' could not be converted to a decimal number.
+how to fix:
+  Provide a valid number such as '3.14' or '1e5'. Words like 'inf' or 'nan'
+  are not allowed.
+      parse_float("3.14")

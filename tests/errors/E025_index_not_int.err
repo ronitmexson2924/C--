@@ -1,0 +1,9 @@
+E025_index_not_int.cmm:4:13: semantic error: index must be int, got string
+  |
+4 |     print(a["zero"]);
+  |             ^
+what went wrong:
+  Positions inside '[...]' must be integers, but got string.
+how to fix:
+  Use an integer value or expression for indexing.
+      items[0]

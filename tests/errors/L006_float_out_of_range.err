@@ -1,0 +1,9 @@
+L006_float_out_of_range.cmm:3:13: lexical error: float literal out of range
+  |
+3 |     let x = 1.0e999;
+  |             ^^^^^^^
+what went wrong:
+  This decimal number is too large to fit in a 64-bit floating point number.
+how to fix:
+  Use a smaller number or adjust the exponent.
+      1.0e100

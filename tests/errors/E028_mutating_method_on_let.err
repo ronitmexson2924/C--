@@ -1,0 +1,10 @@
+E028_mutating_method_on_let.cmm:4:5: semantic error: cannot call mutating method 'push' on immutable variable 's'
+  |
+4 |     s.push(1);
+  |     ^^^^
+what went wrong:
+  The method 'push' changes the collection, but 's' is an immutable 'let'
+  variable.
+how to fix:
+  Declare 's' with 'mut' instead: 'mut s = ...;'.
+      mut s = list<int>();

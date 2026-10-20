@@ -1,0 +1,4 @@
+module m;
+fn foo() {}
+fn foo() {}
+fn main() {}

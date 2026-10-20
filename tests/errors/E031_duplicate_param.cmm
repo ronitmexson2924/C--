@@ -1,0 +1,3 @@
+module m;
+fn foo(a: int, a: int) {}
+fn main() {}

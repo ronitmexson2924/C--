@@ -1,0 +1,8 @@
+R004_float_overflow.cmm:3:21: runtime error: float overflow
+  |
+3 |     let x = 1.0e308 * 10.0;
+  |                     ^
+what went wrong:
+  The floating point calculation produced a number too large to represent.
+how to fix:
+  Check your numbers to keep values within standard 64-bit float limits.

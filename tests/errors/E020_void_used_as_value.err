@@ -1,0 +1,10 @@
+E020_void_used_as_value.cmm:4:13: semantic error: function 'foo' returns no value and cannot be used in an expression
+  |
+4 |     let x = foo();
+  |             ^^^
+what went wrong:
+  'foo' does not give back a value, so it cannot be used inside an
+  expression.
+how to fix:
+  Call it on its own line: 'foo(...);'.
+      foo();

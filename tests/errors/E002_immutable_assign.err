@@ -1,0 +1,9 @@
+E002_immutable_assign.cmm:4:5: semantic error: cannot assign to immutable variable 'x' (declared with 'let' at line 3, column 9); declare it with 'mut' to allow assignment
+  |
+4 |     x = 20;
+  |     ^
+what went wrong:
+  In C--, variables declared with 'let' cannot be changed.
+how to fix:
+  Declare 'x' with 'mut' instead if you need to reassign it.
+      mut x = 0;

@@ -1,0 +1,9 @@
+R008_eof_read.cmm:3:5: semantic error: undefined function 'read_line'
+  |
+3 |     read_line();
+  |     ^^^^^^^^^
+what went wrong:
+  'read_line' is not a function that exists.
+how to fix:
+  Check the spelling or define it with 'fn read_line(...) {{ ... }}'.
+      fn read_line() {}

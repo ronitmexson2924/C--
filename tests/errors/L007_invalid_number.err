@@ -1,0 +1,10 @@
+L007_invalid_number.cmm:3:13: lexical error: invalid number literal
+  |
+3 |     let x = 1.e;
+  |             ^
+what went wrong:
+  This number is malformed.
+how to fix:
+  Write digits after the dot (for example '1.0' instead of '1.') or check
+  the exponent format.
+      1.0

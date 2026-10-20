@@ -1,0 +1,4 @@
+module m;
+fn main() {
+    let x: int = 3.14;
+}

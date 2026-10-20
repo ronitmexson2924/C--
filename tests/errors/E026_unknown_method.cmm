@@ -1,0 +1,5 @@
+module m;
+fn main() {
+    let a = [1];
+    a.push(2);
+}

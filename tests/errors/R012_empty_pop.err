@@ -1,0 +1,11 @@
+R012_empty_pop.cmm:4:5: runtime error: pop on empty stack
+  |
+4 |     s.pop();
+  |     ^
+what went wrong:
+  You tried to take from an empty stack.
+how to fix:
+  Check stack.is_empty() or stack.len() > 0 before taking an item.
+      if (!items.is_empty()) {
+            items.pop();
+      }

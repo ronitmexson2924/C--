@@ -1,9 +1,28 @@
 semantic_multiple.cmm:4:5: semantic error: cannot assign to immutable variable 'a' (declared with 'let' at line 3, column 9); declare it with 'mut' to allow assignment
-        a = 2;
-        ^
+  |
+4 |     a = 2;
+  |     ^
+what went wrong:
+  In C--, variables declared with 'let' cannot be changed.
+how to fix:
+  Declare 'a' with 'mut' instead if you need to reassign it.
+      mut a = 0;
 semantic_multiple.cmm:5:5: semantic error: undeclared variable 'b'
-        b = 3;
-        ^
+  |
+5 |     b = 3;
+  |     ^
+what went wrong:
+  'b' has not been declared in this scope.
+how to fix:
+  Declare 'b' before using it, with 'let b = ...;' or 'mut b = ...;'.
+      let b = 0;
+  did you mean 'a'?
 semantic_multiple.cmm:6:15: semantic error: operator '+' cannot be applied to int and string
-        let c = a + "x";
-                  ^
+  |
+6 |     let c = a + "x";
+  |               ^
+what went wrong:
+  The '+' operator cannot combine values of type int and string.
+how to fix:
+  Make sure both sides have matching compatible types. C-- never converts
+  types automatically.

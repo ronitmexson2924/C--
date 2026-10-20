@@ -1,0 +1,8 @@
+L001_unexpected_char.cmm:3:5: lexical error: unexpected character '@'
+  |
+3 |     @
+  |     ^
+what went wrong:
+  The character '@' is not recognized in C-- code.
+how to fix:
+  Remove this character or replace it with valid C-- code.

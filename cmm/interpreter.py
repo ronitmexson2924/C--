@@ -132,6 +132,7 @@ class Interpreter:
                     f"step limit exceeded ({self._max_steps} steps)",
                     node.line,
                     node.col,
+                    details={"max_steps": self._max_steps},
                 )
             self._steps += 1
 
@@ -203,7 +204,7 @@ class Interpreter:
     ) -> Any:
         """Execute user-defined function in a fresh environment per §A6.1."""
         if self._call_depth >= 1000:
-            raise CmmRuntimeError("R007", "call depth limit exceeded (1000)", line, col)
+            raise CmmRuntimeError("R007", "call depth limit exceeded (1000)", line, col, details={"limit": 1000})
 
         self._call_depth += 1
         saved_envs = self._envs
@@ -537,6 +538,12 @@ class Interpreter:
                     f"index out of range (index {idx_val}, length {len(target_val)})",
                     node.line,
                     node.col,
+                    details={
+                        "index": idx_val,
+                        "length": len(target_val),
+                        "max_index": max(0, len(target_val) - 1),
+                        "kind": "string",
+                    },
                 )
             return target_val[idx_val]
 
@@ -553,9 +560,9 @@ class Interpreter:
             if not isinstance(n, int):
                 raise CmmRuntimeError("R000", "internal error: array size must be int", node.line, node.col)
             if n < 0:
-                raise CmmRuntimeError("R014", f"array size must not be negative (got {n})", node.line, node.col)
+                raise CmmRuntimeError("R014", f"array size must not be negative (got {n})", node.line, node.col, details={"size": n})
             if n > MAX_COLLECTION_SIZE:
-                raise CmmRuntimeError("R013", f"collection size limit exceeded ({MAX_COLLECTION_SIZE})", node.line, node.col)
+                raise CmmRuntimeError("R013", f"collection size limit exceeded ({MAX_COLLECTION_SIZE})", node.line, node.col, details={"limit": MAX_COLLECTION_SIZE})
             return CmmArray([copy.deepcopy(fill) for _ in range(n)])
 
         elif node.kind == "list":

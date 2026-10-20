@@ -1,0 +1,11 @@
+E017_invalid_main_sig.cmm:2:1: semantic error: 'main' must have no parameters and no return type
+  |
+2 | fn main(a: int) {}
+  | ^^^^
+what went wrong:
+  The 'main' function is the entry point and must take no parameters and
+  return nothing.
+how to fix:
+  Declare it as 'fn main() { ... }'.
+      fn main() {
+      }

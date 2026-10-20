@@ -1,0 +1,8 @@
+E024_index_non_indexable.cmm:4:12: semantic error: type int cannot be indexed
+  |
+4 |     print(x[0]);
+  |            ^
+what went wrong:
+  Values of type int cannot be accessed with '[...]'.
+how to fix:
+  Only strings, arrays, and lists can be indexed with '[position]'.

@@ -1,3 +1,8 @@
 runtime_step_limit.cmm:3:5: runtime error: step limit exceeded (10 steps)
-        while (true) {}
-        ^
+  |
+3 |     while (true) {}
+  |     ^
+what went wrong:
+  The program ran more steps than allowed by the --max-steps limit.
+how to fix:
+  Increase the --max-steps limit or check that your loops terminate.

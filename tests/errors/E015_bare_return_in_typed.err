@@ -1,0 +1,10 @@
+E015_bare_return_in_typed.cmm:3:5: semantic error: function 'foo' must return a value of type int
+  |
+3 |     return;
+  |     ^^^^^^
+what went wrong:
+  The function 'foo' promises to return a int, but 'return;' provides no
+  value.
+how to fix:
+  Provide a value of type int with 'return <value>;'.
+      return 0;

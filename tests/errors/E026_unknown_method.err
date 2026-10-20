@@ -1,0 +1,8 @@
+E026_unknown_method.cmm:4:5: semantic error: type array<int> has no method 'push'
+  |
+4 |     a.push(2);
+  |     ^^^^
+what went wrong:
+  Values of type array<int> do not have a method named 'push'.
+how to fix:
+  Use one of the supported methods for array<int>: len.

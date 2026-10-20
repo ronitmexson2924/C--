@@ -1,0 +1,9 @@
+E001_undeclared_var.cmm:3:11: semantic error: undeclared variable 'y'
+  |
+3 |     print(y);
+  |           ^
+what went wrong:
+  'y' has not been declared in this scope.
+how to fix:
+  Declare 'y' before using it, with 'let y = ...;' or 'mut y = ...;'.
+      let y = 0;

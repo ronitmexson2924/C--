@@ -1,0 +1,9 @@
+E006_binary_type_mismatch.cmm:3:16: semantic error: operator '+' cannot be applied to int and string
+  |
+3 |     let x = 10 + "hello";
+  |                ^
+what went wrong:
+  The '+' operator cannot combine values of type int and string.
+how to fix:
+  Make sure both sides have matching compatible types. C-- never converts
+  types automatically.

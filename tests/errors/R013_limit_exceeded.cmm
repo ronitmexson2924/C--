@@ -1,0 +1,4 @@
+module m;
+fn main() {
+    let a = array<int>(10000001, 0);
+}

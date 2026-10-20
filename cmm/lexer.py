@@ -98,7 +98,7 @@ def tokenize(source: str) -> list[Token]:
                         break
                     advance()
                 if not closed:
-                    raise LexError("L004", "unterminated block comment", start_comment_line, start_comment_col)
+                    raise LexError("L004", "unterminated block comment", start_comment_line, start_comment_col, details={"token_len": 2})
                 continue
 
         # Record start position of the next token
@@ -126,7 +126,7 @@ def tokenize(source: str) -> list[Token]:
                 advance()
             d_part = source[start_pos:pos]
             if len(d_part) > 1 and d_part.startswith("0"):
-                raise LexError("L008", "leading zeros are not allowed in number literals", start_line, start_col)
+                raise LexError("L008", "leading zeros are not allowed in number literals", start_line, start_col, details={"token_len": len(d_part)})
 
             is_float = False
 
@@ -138,7 +138,7 @@ def tokenize(source: str) -> list[Token]:
                     while pos < length and "0" <= source[pos] <= "9":
                         advance()
                 else:
-                    raise LexError("L007", "invalid number literal", start_line, start_col)
+                    raise LexError("L007", "invalid number literal", start_line, start_col, details={"token_len": max(1, pos - start_pos)})
 
             # Step 3 & 4: Check for exponent 'e' or 'E'
             if is_float and pos < length and source[pos] in ("e", "E"):
@@ -152,30 +152,30 @@ def tokenize(source: str) -> list[Token]:
                     while pos < length and "0" <= source[pos] <= "9":
                         advance()
                 else:
-                    raise LexError("L007", "invalid number literal", start_line, start_col)
+                    raise LexError("L007", "invalid number literal", start_line, start_col, details={"token_len": max(1, pos - start_pos)})
             elif not is_float and pos < length and source[pos] in ("e", "E"):
-                raise LexError("L007", "invalid number literal", start_line, start_col)
+                raise LexError("L007", "invalid number literal", start_line, start_col, details={"token_len": max(1, pos - start_pos)})
 
             # Step 5: Check character immediately after literal
             if pos < length:
                 next_c = source[pos]
                 if next_c.isalpha() or next_c.isdigit() or next_c == "_":
-                    raise LexError("L007", "invalid number literal", start_line, start_col)
+                    raise LexError("L007", "invalid number literal", start_line, start_col, details={"token_len": max(1, pos - start_pos)})
 
             # Step 6: Range checks
             lexeme = source[start_pos:pos]
             if not is_float:
                 int_val = int(lexeme)
                 if int_val > 9223372036854775807:
-                    raise LexError("L005", "integer literal out of range", start_line, start_col)
+                    raise LexError("L005", "integer literal out of range", start_line, start_col, details={"token_len": len(lexeme)})
                 tokens.append(Token(TokenType.INT, lexeme, int_val, start_line, start_col))
             else:
                 try:
                     float_val = float(lexeme)
                     if math.isinf(float_val):
-                        raise LexError("L006", "float literal out of range", start_line, start_col)
+                        raise LexError("L006", "float literal out of range", start_line, start_col, details={"token_len": len(lexeme)})
                 except OverflowError:
-                    raise LexError("L006", "float literal out of range", start_line, start_col)
+                    raise LexError("L006", "float literal out of range", start_line, start_col, details={"token_len": len(lexeme)})
                 tokens.append(Token(TokenType.FLOAT, lexeme, float_val, start_line, start_col))
             continue
 
@@ -208,7 +208,7 @@ def tokenize(source: str) -> list[Token]:
                         esc_col = col
                         advance()  # consume '\'
                         if pos >= length:
-                            raise LexError("L002", "unterminated string literal", start_line, start_col)
+                            raise LexError("L002", "unterminated string literal", start_line, start_col, details={"token_len": 3})
                         esc_c = source[pos]
                         advance()  # consume escaped char
                         if esc_c == "n":
@@ -225,13 +225,13 @@ def tokenize(source: str) -> list[Token]:
                             chars.append("\\")
                         else:
                             esc_display = "U+000A" if esc_c == "\n" else esc_c
-                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col)
+                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col, details={"esc_display": esc_display, "token_len": 2})
                     else:
                         chars.append(advance())
                 else:
                     sc = source[pos]
                     if sc == "\n":
-                        raise LexError("L002", "unterminated string literal", start_line, start_col)
+                        raise LexError("L002", "unterminated string literal", start_line, start_col, details={"token_len": 1})
                     if sc == q:
                         advance()  # consume closing quote
                         closed = True
@@ -241,7 +241,7 @@ def tokenize(source: str) -> list[Token]:
                         esc_col = col
                         advance()  # consume '\'
                         if pos >= length or source[pos] == "\n":
-                            raise LexError("L002", "unterminated string literal", start_line, start_col)
+                            raise LexError("L002", "unterminated string literal", start_line, start_col, details={"token_len": 1})
                         esc_c = source[pos]
                         advance()  # consume escaped char
                         if esc_c == "n":
@@ -258,12 +258,12 @@ def tokenize(source: str) -> list[Token]:
                             chars.append("\\")
                         else:
                             esc_display = "U+000A" if esc_c == "\n" else esc_c
-                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col)
+                            raise LexError("L003", f"invalid escape sequence '\\{esc_display}'", esc_line, esc_col, details={"esc_display": esc_display, "token_len": 2})
                     else:
                         chars.append(advance())
 
             if not closed:
-                raise LexError("L002", "unterminated string literal", start_line, start_col)
+                raise LexError("L002", "unterminated string literal", start_line, start_col, details={"token_len": 3 if is_triple else 1})
 
             lexeme = source[start_pos:pos]
             tokens.append(Token(TokenType.STRING, lexeme, "".join(chars), start_line, start_col))
@@ -273,7 +273,7 @@ def tokenize(source: str) -> list[Token]:
         if c == "+":
             advance()
             if pos < length and source[pos] == "+":
-                raise LexError("L009", "'++' is not supported; use '+= 1'", start_line, start_col)
+                raise LexError("L009", "'++' is not supported; use '+= 1'", start_line, start_col, details={"token_len": 2})
             if pos < length and source[pos] == "=":
                 advance()
                 tokens.append(Token(TokenType.PLUSEQ, "+=", None, start_line, start_col))
@@ -284,7 +284,7 @@ def tokenize(source: str) -> list[Token]:
         if c == "-":
             advance()
             if pos < length and source[pos] == "-":
-                raise LexError("L010", "'--' is not supported; use '-= 1'", start_line, start_col)
+                raise LexError("L010", "'--' is not supported; use '-= 1'", start_line, start_col, details={"token_len": 2})
             if pos < length and source[pos] == "=":
                 advance()
                 tokens.append(Token(TokenType.MINUSEQ, "-=", None, start_line, start_col))
@@ -364,7 +364,7 @@ def tokenize(source: str) -> list[Token]:
                 advance()
                 tokens.append(Token(TokenType.ANDAND, "&&", None, start_line, start_col))
             else:
-                raise LexError("L011", "single '&' is not supported; did you mean '&&'?", start_line, start_col)
+                raise LexError("L011", "single '&' is not supported; did you mean '&&'?", start_line, start_col, details={"token_len": 1})
             continue
 
         if c == "|":
@@ -373,7 +373,7 @@ def tokenize(source: str) -> list[Token]:
                 advance()
                 tokens.append(Token(TokenType.OROR, "||", None, start_line, start_col))
             else:
-                raise LexError("L012", "single '|' is not supported; did you mean '||'?", start_line, start_col)
+                raise LexError("L012", "single '|' is not supported; did you mean '||'?", start_line, start_col, details={"token_len": 1})
             continue
 
         if c == "(":
@@ -428,7 +428,7 @@ def tokenize(source: str) -> list[Token]:
 
         # 7. Any other character -> L001 (§3.1, §3.6)
         formatted_char = _format_char_for_l001(c)
-        raise LexError("L001", f"unexpected character '{formatted_char}'", start_line, start_col)
+        raise LexError("L001", f"unexpected character '{formatted_char}'", start_line, start_col, details={"formatted_char": formatted_char, "token_len": 1})
 
     # Append EOF token (§2.6)
     tokens.append(Token(TokenType.EOF, "", None, line, col))

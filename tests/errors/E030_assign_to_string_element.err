@@ -1,0 +1,9 @@
+E030_assign_to_string_element.cmm:4:5: semantic error: strings are immutable; cannot assign to an element
+  |
+4 |     s[0] = "H";
+  |     ^
+what went wrong:
+  Text cannot be changed letter by letter in C--.
+how to fix:
+  Build the result another way, for example with a list<string> or by
+  creating a new string.

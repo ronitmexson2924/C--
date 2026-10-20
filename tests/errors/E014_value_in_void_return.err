@@ -1,0 +1,10 @@
+E014_value_in_void_return.cmm:3:5: semantic error: void function 'foo' cannot return a value
+  |
+3 |     return 10;
+  |     ^^^^^^
+what went wrong:
+  The function 'foo' has no return type, so it cannot return a value.
+how to fix:
+  Use a bare 'return;' without a value, or declare a return type with '->
+  <type>'.
+      return;

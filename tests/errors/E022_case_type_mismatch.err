@@ -1,0 +1,8 @@
+E022_case_type_mismatch.cmm:4:14: semantic error: case value of type string does not match switch selector of type int
+  |
+4 |         case "a": {}
+  |              ^
+what went wrong:
+  The case value has type string, but the switch is checking a int.
+how to fix:
+  Make sure all case values have the same type as the switch value (int).

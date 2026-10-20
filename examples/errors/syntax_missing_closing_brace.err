@@ -1,3 +1,8 @@
 syntax_missing_closing_brace.cmm:4:1: syntax error: expected '}', found end of file
-    
-    ^
+  |
+3 |     let x = 1;
+  |               ^
+what went wrong:
+  At this spot C-- expected '}', but found end of file.
+how to fix:
+  Add the missing '}' to close the block.

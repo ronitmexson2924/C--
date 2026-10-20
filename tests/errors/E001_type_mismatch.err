@@ -1,0 +1,8 @@
+E001_type_mismatch.cmm:3:10: syntax error: expected '=', found ':'
+  |
+3 |     let x: int = 3.14;
+  |          ^
+what went wrong:
+  At this spot C-- expected '=', but found ':'.
+how to fix:
+  Replace ':' with '='.

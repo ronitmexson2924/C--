@@ -1,0 +1,8 @@
+E010_redefine_builtin.cmm:2:4: syntax error: expected identifier or 'main', found 'print'
+  |
+2 | fn print() {}
+  |    ^^^^^
+what went wrong:
+  At this spot C-- expected identifier or 'main', but found 'print'.
+how to fix:
+  Replace 'print' with identifier or 'main'.

@@ -1,0 +1,10 @@
+E016_wrong_return_type.cmm:3:12: semantic error: cannot return string from function 'foo' declared to return int
+  |
+3 |     return "hi";
+  |            ^^^^^^
+what went wrong:
+  The function 'foo' is declared to return int, but this line returns
+  string.
+how to fix:
+  Return a value of type int, or change the function's return type.
+      return 0;

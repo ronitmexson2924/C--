@@ -1,0 +1,9 @@
+R001_overflow.cmm:3:33: runtime error: integer overflow
+  |
+3 |     let x = 9223372036854775807 + 1;
+  |                                 ^
+what went wrong:
+  The arithmetic calculation produced an integer too large to fit in 64
+  bits.
+how to fix:
+  Check the numbers being computed to prevent exceeding integer limits.

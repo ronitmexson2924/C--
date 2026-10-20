@@ -1,0 +1,11 @@
+R003_mod_zero.cmm:3:16: runtime error: modulo by zero
+  |
+3 |     let x = 10 % 0;
+  |                ^
+what went wrong:
+  The program attempted to compute remainder ('%') with a divisor of zero.
+how to fix:
+  Check that the second number is not zero before using '%'.
+      if (b != 0) {
+            let r = a % b;
+      }

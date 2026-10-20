@@ -1,0 +1,6 @@
+module m;
+fn main() {
+    switch (1) {
+        case "a": {}
+    }
+}

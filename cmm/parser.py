@@ -83,18 +83,33 @@ class Parser:
 
     def _error_expected(self, expected: str, token: Token) -> NoReturn:
         """Report syntax error S001 or S003 per Section 10.4."""
+        tok_len = len(token.lexeme) if token.type != TokenType.EOF else 1
         if token.type == TokenType.RESERVED:
             raise ParseError(
                 "S003",
                 f"'{token.lexeme}' is reserved for future use and cannot be used in this version",
                 token.line,
                 token.col,
+                details={"word": token.lexeme, "token_len": tok_len},
             )
+        found_str = _format_found_token(token)
+        from cmm.suggest import find_suggestion
+        from cmm.tokens import KEYWORDS
+        sugg = None
+        if token.type == TokenType.IDENT:
+            sugg = find_suggestion(token.lexeme, list(KEYWORDS.keys()))
+
         raise ParseError(
             "S001",
-            f"expected {expected}, found {_format_found_token(token)}",
+            f"expected {expected}, found {found_str}",
             token.line,
             token.col,
+            details={
+                "expected": expected,
+                "found": found_str,
+                "token_len": tok_len,
+                "suggestion": sugg,
+            },
         )
 
     def _consume(self, t_type: TokenType, expected_str: str) -> Token:
@@ -176,6 +191,8 @@ class Parser:
             body=body,
             line=fn_token.line,
             col=fn_token.col,
+            name_line=name_token.line,
+            name_col=name_token.col,
         )
 
     def parse_param(self) -> Param:

@@ -1,0 +1,10 @@
+L004_unterminated_comment.cmm:2:1: lexical error: unterminated block comment
+  |
+2 | /* unclosed comment
+  | ^^
+what went wrong:
+  A multi-line comment starts with '/*' here, but never reaches a closing
+  '*/'.
+how to fix:
+  Add '*/' where the comment should end.
+      /* comment */

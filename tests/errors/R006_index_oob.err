@@ -1,0 +1,13 @@
+R006_index_oob.cmm:4:12: runtime error: index out of range (index 5, length 1)
+  |
+4 |     print(a[5]);
+  |            ^
+what went wrong:
+  You asked for position 5, but the array only has 1 items (valid positions
+  are 0 to 0). Positions start at 0 and cannot be negative.
+how to fix:
+  Check that your position is less than the collection length before
+  indexing.
+      if (i < items.len()) {
+            print(items[i]);
+      }

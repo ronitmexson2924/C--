@@ -1,3 +1,9 @@
 semantic_if_condition.cmm:3:9: semantic error: condition must be of type bool, found int
-        if (1) {}
-            ^
+  |
+3 |     if (1) {}
+  |         ^
+what went wrong:
+  Conditions in 'if' and loops must evaluate to true or false, but got int.
+how to fix:
+  Use a comparison such as '==', '!=', or '<', or a boolean variable.
+      x > 0

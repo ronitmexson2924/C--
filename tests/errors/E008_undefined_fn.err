@@ -1,0 +1,9 @@
+E008_undefined_fn.cmm:3:5: semantic error: undefined function 'foo'
+  |
+3 |     foo();
+  |     ^^^
+what went wrong:
+  'foo' is not a function that exists.
+how to fix:
+  Check the spelling or define it with 'fn foo(...) {{ ... }}'.
+      fn foo() {}

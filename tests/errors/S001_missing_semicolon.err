@@ -1,0 +1,9 @@
+S001_missing_semicolon.cmm:4:1: syntax error: expected ';', found '}'
+  |
+4 | }
+  | ^
+what went wrong:
+  At this spot C-- expected ';', but found '}'.
+how to fix:
+  Add a semicolon ';' at the end of the line.
+      ;

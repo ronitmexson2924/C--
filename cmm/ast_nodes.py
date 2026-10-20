@@ -52,6 +52,8 @@ class FunctionDef(ASTNode):
     params: list[Param]
     ret_type: Optional[Type]  # None means void function
     body: "Block"
+    name_line: int = 1
+    name_col: int = 1
 
     @property
     def return_type(self) -> Optional[Type]:

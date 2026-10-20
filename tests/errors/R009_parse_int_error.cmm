@@ -1,0 +1,4 @@
+module m;
+fn main() {
+    parse_int("abc");
+}

@@ -1,0 +1,9 @@
+E019_call_main.cmm:3:5: semantic error: 'main' cannot be called
+  |
+3 |     main();
+  |     ^^^^
+what went wrong:
+  'main' starts the program and cannot be called from other code.
+how to fix:
+  Remove the call to 'main'. Put shared code into a helper function and call
+  that instead.

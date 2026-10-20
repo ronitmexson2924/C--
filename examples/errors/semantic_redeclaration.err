@@ -1,3 +1,10 @@
 semantic_redeclaration.cmm:4:9: semantic error: variable 'x' is already declared in this scope (at line 3, column 9)
-        let x = 2;
-            ^
+  |
+4 |     let x = 2;
+  |         ^
+what went wrong:
+  A variable named 'x' already exists in this scope.
+how to fix:
+  Choose a different name for this variable, or assign to the existing one
+  without 'let' or 'mut'.
+      x = 0;

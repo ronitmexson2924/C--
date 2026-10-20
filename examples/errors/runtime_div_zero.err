@@ -1,3 +1,11 @@
 runtime_div_zero.cmm:4:14: runtime error: division by zero
-        print(10 / d);
-                 ^
+  |
+4 |     print(10 / d);
+  |              ^
+what went wrong:
+  The program attempted to divide a number by zero.
+how to fix:
+  Check that the divisor is not zero before dividing.
+      if (divisor != 0) {
+            let q = n / divisor;
+      }

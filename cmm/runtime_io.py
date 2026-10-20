@@ -91,16 +91,16 @@ def cmm_parse_int(s: str, line: int = 1, col: int = 1) -> int:
     """Parse integer per §A6.2."""
     stripped = s.strip(" \t")
     if not stripped or not _INT_REGEX.match(stripped):
-        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col)
+        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col, details={"text": s})
 
     try:
         val = int(stripped)
     except ValueError:
-        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col)
+        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col, details={"text": s})
 
     # 64-bit signed integer limits: [-9223372036854775808, 9223372036854775807]
     if val < -9223372036854775808 or val > 9223372036854775807:
-        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col)
+        raise CmmRuntimeError("R009", f"cannot convert '{s}' to int", line, col, details={"text": s})
 
     return val
 
@@ -118,14 +118,14 @@ def cmm_parse_float(s: str, line: int = 1, col: int = 1) -> float:
         or "_" in stripped
         or not _FLOAT_REGEX.match(stripped)
     ):
-        raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col)
+        raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col, details={"text": s})
 
     try:
         val = float(stripped)
         import math
         if math.isinf(val) or math.isnan(val):
-            raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col)
+            raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col, details={"text": s})
     except (ValueError, OverflowError):
-        raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col)
+        raise CmmRuntimeError("R010", f"cannot convert '{s}' to float", line, col, details={"text": s})
 
     return val

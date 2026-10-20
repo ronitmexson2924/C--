@@ -26,6 +26,12 @@ class CmmArray:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "array",
+                },
             )
         return self.elements[index]
 
@@ -36,6 +42,12 @@ class CmmArray:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "array",
+                },
             )
         self.elements[index] = val
 
@@ -59,6 +71,12 @@ class CmmList:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "list",
+                },
             )
         return self.elements[index]
 
@@ -69,6 +87,12 @@ class CmmList:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "list",
+                },
             )
         self.elements[index] = val
 
@@ -88,12 +112,13 @@ class CmmList:
                 f"collection size limit exceeded ({MAX_COLLECTION_SIZE})",
                 line,
                 col,
+                details={"limit": MAX_COLLECTION_SIZE, "kind": "list"},
             )
         self.elements.append(item)
 
     def pop(self, line: int, col: int) -> Any:
         if not self.elements:
-            raise CmmRuntimeError("R012", "pop on empty list", line, col)
+            raise CmmRuntimeError("R012", "pop on empty list", line, col, details={"kind": "list"})
         return self.elements.pop()
 
     def insert(self, index: int, item: Any, line: int, col: int) -> None:
@@ -103,6 +128,12 @@ class CmmList:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "list",
+                },
             )
         if len(self.elements) + 1 > MAX_COLLECTION_SIZE:
             raise CmmRuntimeError(
@@ -110,6 +141,7 @@ class CmmList:
                 f"collection size limit exceeded ({MAX_COLLECTION_SIZE})",
                 line,
                 col,
+                details={"limit": MAX_COLLECTION_SIZE, "kind": "list"},
             )
         self.elements.insert(index, item)
 
@@ -120,6 +152,12 @@ class CmmList:
                 f"index out of range (index {index}, length {len(self.elements)})",
                 line,
                 col,
+                details={
+                    "index": index,
+                    "length": len(self.elements),
+                    "max_index": max(0, len(self.elements) - 1),
+                    "kind": "list",
+                },
             )
         return self.elements.pop(index)
 
@@ -143,17 +181,18 @@ class CmmStack:
                 f"collection size limit exceeded ({MAX_COLLECTION_SIZE})",
                 line,
                 col,
+                details={"limit": MAX_COLLECTION_SIZE, "kind": "stack"},
             )
         self.elements.append(item)
 
     def pop(self, line: int, col: int) -> Any:
         if not self.elements:
-            raise CmmRuntimeError("R012", "pop on empty stack", line, col)
+            raise CmmRuntimeError("R012", "pop on empty stack", line, col, details={"kind": "stack"})
         return self.elements.pop()
 
     def peek(self, line: int, col: int) -> Any:
         if not self.elements:
-            raise CmmRuntimeError("R012", "peek on empty stack", line, col)
+            raise CmmRuntimeError("R012", "peek on empty stack", line, col, details={"kind": "stack"})
         return self.elements[-1]
 
     def len(self) -> int:
@@ -182,17 +221,18 @@ class CmmQueue:
                 f"collection size limit exceeded ({MAX_COLLECTION_SIZE})",
                 line,
                 col,
+                details={"limit": MAX_COLLECTION_SIZE, "kind": "queue"},
             )
         self.elements.append(item)
 
     def dequeue(self, line: int, col: int) -> Any:
         if not self.elements:
-            raise CmmRuntimeError("R012", "dequeue on empty queue", line, col)
+            raise CmmRuntimeError("R012", "dequeue on empty queue", line, col, details={"kind": "queue"})
         return self.elements.pop(0)
 
     def peek(self, line: int, col: int) -> Any:
         if not self.elements:
-            raise CmmRuntimeError("R012", "peek on empty queue", line, col)
+            raise CmmRuntimeError("R012", "peek on empty queue", line, col, details={"kind": "queue"})
         return self.elements[0]
 
     def len(self) -> int:

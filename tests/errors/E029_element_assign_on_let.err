@@ -1,0 +1,9 @@
+E029_element_assign_on_let.cmm:4:5: semantic error: cannot assign to element of immutable variable 'a'
+  |
+4 |     a[0] = 2;
+  |     ^
+what went wrong:
+  Elements of 'a' cannot be modified because it was declared with 'let'.
+how to fix:
+  Declare 'a' with 'mut' instead to allow element assignments.
+      mut a = [1, 2];

@@ -1,0 +1,8 @@
+E011_wrong_arg_count.cmm:4:5: semantic error: function 'foo' expects 1 argument(s), got 2
+  |
+4 |     foo(1, 2);
+  |     ^^^
+what went wrong:
+  function 'foo' requires 1 argument(s), but received 2.
+how to fix:
+  Provide the expected number of arguments in the call.

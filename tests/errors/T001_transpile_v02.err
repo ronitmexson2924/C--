@@ -1,0 +1,10 @@
+T001_transpile_v02.cmm:3:13: transpile error: C backend does not support collections
+  |
+3 |     let a = [1, 2];
+  |             ^
+what went wrong:
+  The C backend only supports the v0.1 feature subset and cannot compile
+  <feature>.
+how to fix:
+  Use the reference interpreter ('cmm run') to run programs using v0.2
+  features.

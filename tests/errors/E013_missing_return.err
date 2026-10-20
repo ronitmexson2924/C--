@@ -1,0 +1,11 @@
+E013_missing_return.cmm:2:4: semantic error: function 'foo' does not return a value on all paths
+  |
+2 | fn foo() -> int {
+  |    ^^^
+what went wrong:
+  The function 'foo' promises to give back a int, but in some cases it
+  reaches the end without giving anything back.
+how to fix:
+  Make sure every possible path ends with 'return <int value>;'. For example
+  add this as the last line of the function:
+      return 0;

@@ -1,0 +1,9 @@
+L008_leading_zero.cmm:3:13: lexical error: leading zeros are not allowed in number literals
+  |
+3 |     let x = 012;
+  |             ^^^
+what went wrong:
+  Numbers cannot start with extra zeros.
+how to fix:
+  Remove the leading zero from the number.
+      7

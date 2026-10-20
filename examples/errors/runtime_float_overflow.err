@@ -1,3 +1,8 @@
 runtime_float_overflow.cmm:3:19: runtime error: float overflow
-        print(1.0e308 * 10.0);
-                      ^
+  |
+3 |     print(1.0e308 * 10.0);
+  |                   ^
+what went wrong:
+  The floating point calculation produced a number too large to represent.
+how to fix:
+  Check your numbers to keep values within standard 64-bit float limits.

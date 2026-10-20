@@ -1,0 +1,10 @@
+L003_invalid_escape.cmm:3:14: lexical error: invalid escape sequence '\k'
+  |
+3 |     let s = "\k";
+  |              ^^
+what went wrong:
+  A backslash must be followed by one of the allowed letters, and '\k' is
+  not one.
+how to fix:
+  Use one of \n, \t, \r, \", \', \\. To write a real backslash type '\\'.
+      "first line\nsecond line"

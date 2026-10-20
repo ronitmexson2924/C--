@@ -1,0 +1,12 @@
+E021_invalid_switch_selector.cmm:3:13: semantic error: switch selector must be int or string, got float
+  |
+3 |     switch (1.5) {
+  |             ^
+what went wrong:
+  The value in 'switch (...)' must be an int or string, but got float.
+how to fix:
+  Switch on an integer or text value, or use 'if'/'else' for other types.
+      switch (x) {
+            case 1: {}
+            default: {}
+      }

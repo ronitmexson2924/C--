@@ -1,3 +1,10 @@
 lexical_unterminated_string.cmm:3:11: lexical error: unterminated string literal
-        print("oops);
-              ^
+  |
+3 |     print("oops);
+  |           ^
+what went wrong:
+  This text starts with a quote but never ends.
+how to fix:
+  Add the closing quote on the same line. For text over several lines use
+  triple quotes """...""" or '''...'''.
+      """multi-line text"""

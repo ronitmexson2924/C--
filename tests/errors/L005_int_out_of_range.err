@@ -1,0 +1,9 @@
+L005_int_out_of_range.cmm:3:13: lexical error: integer literal out of range
+  |
+3 |     let x = 99999999999999999999;
+  |             ^^^^^^^^^^^^^^^^^^^^
+what went wrong:
+  This integer number is too large to fit in a 64-bit signed integer.
+how to fix:
+  Use an integer between -9223372036854775808 and 9223372036854775807.
+      9223372036854775807

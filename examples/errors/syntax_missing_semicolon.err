@@ -1,3 +1,9 @@
 syntax_missing_semicolon.cmm:4:5: syntax error: expected ';', found 'print'
-        print(x);
-        ^
+  |
+4 |     print(x);
+  |     ^^^^^
+what went wrong:
+  At this spot C-- expected ';', but found 'print'.
+how to fix:
+  Add a semicolon ';' at the end of the line.
+      ;

@@ -1,0 +1,5 @@
+module m;
+fn foo() {
+    return 10;
+}
+fn main() {}

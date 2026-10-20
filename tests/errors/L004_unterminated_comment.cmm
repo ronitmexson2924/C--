@@ -1,0 +1,3 @@
+module m;
+/* unclosed comment
+fn main() {}

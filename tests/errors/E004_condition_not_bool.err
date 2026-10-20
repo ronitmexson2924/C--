@@ -1,0 +1,9 @@
+E004_condition_not_bool.cmm:3:9: semantic error: condition must be of type bool, found int
+  |
+3 |     if (10) {}
+  |         ^
+what went wrong:
+  Conditions in 'if' and loops must evaluate to true or false, but got int.
+how to fix:
+  Use a comparison such as '==', '!=', or '<', or a boolean variable.
+      x > 0

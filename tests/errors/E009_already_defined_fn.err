@@ -1,0 +1,8 @@
+E009_already_defined_fn.cmm:3:1: semantic error: function 'foo' is already defined
+  |
+3 | fn foo() {}
+  | ^^^
+what went wrong:
+  There is already a function named 'foo'.
+how to fix:
+  Give this function a unique name or remove the duplicate definition.

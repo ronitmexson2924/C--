@@ -1,0 +1,9 @@
+E007_assign_type_mismatch.cmm:4:5: semantic error: cannot assign value of type string to variable 'x' of type int
+  |
+4 |     x = "hello";
+  |     ^
+what went wrong:
+  The variable 'x' holds int, but the new value is string.
+how to fix:
+  Provide a value of type int, or change the variable's initial type when
+  declared.

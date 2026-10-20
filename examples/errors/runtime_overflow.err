@@ -1,3 +1,9 @@
 runtime_overflow.cmm:5:11: runtime error: integer overflow
-            f *= i;
-              ^
+  |
+5 |         f *= i;
+  |           ^
+what went wrong:
+  The arithmetic calculation produced an integer too large to fit in 64
+  bits.
+how to fix:
+  Check the numbers being computed to prevent exceeding integer limits.

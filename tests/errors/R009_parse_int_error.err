@@ -1,0 +1,10 @@
+R009_parse_int_error.cmm:3:5: runtime error: cannot convert 'abc' to int
+  |
+3 |     parse_int("abc");
+  |     ^
+what went wrong:
+  The text 'abc' could not be converted to an integer.
+how to fix:
+  Provide an integer such as '42' or '-7'. Spaces at the ends are allowed,
+  but letters, underscores, and decimals are not.
+      parse_int("42")

@@ -1,0 +1,5 @@
+module m;
+fn main() {
+    mut s = "hello";
+    s[0] = "H";
+}

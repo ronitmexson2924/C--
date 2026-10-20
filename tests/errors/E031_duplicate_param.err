@@ -1,0 +1,8 @@
+E031_duplicate_param.cmm:2:16: semantic error: duplicate parameter 'a'
+  |
+2 | fn foo(a: int, a: int) {}
+  |                ^
+what went wrong:
+  The parameter 'a' is listed more than once in this function's parameters.
+how to fix:
+  Give each parameter a distinct name.

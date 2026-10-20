@@ -1,0 +1,9 @@
+L011_single_ampersand.cmm:3:18: lexical error: single '&' is not supported; did you mean '&&'?
+  |
+3 |     let b = true & false;
+  |                  ^
+what went wrong:
+  C-- does not have a single '&' symbol.
+how to fix:
+  Use '&&' for logical AND.
+      a && b

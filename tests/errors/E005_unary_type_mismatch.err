@@ -1,0 +1,9 @@
+E005_unary_type_mismatch.cmm:3:13: semantic error: operator '!' cannot be applied to int
+  |
+3 |     let x = !10;
+  |             ^
+what went wrong:
+  The '!' operator cannot be used on a value of type int.
+how to fix:
+  Apply '!' to compatible types (for example '-' on numbers, or '!' on
+  bool).

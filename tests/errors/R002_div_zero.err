@@ -1,0 +1,11 @@
+R002_div_zero.cmm:3:16: runtime error: division by zero
+  |
+3 |     let x = 10 / 0;
+  |                ^
+what went wrong:
+  The program attempted to divide a number by zero.
+how to fix:
+  Check that the divisor is not zero before dividing.
+      if (divisor != 0) {
+            let q = n / divisor;
+      }

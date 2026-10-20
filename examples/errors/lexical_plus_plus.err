@@ -1,3 +1,9 @@
 lexical_plus_plus.cmm:4:6: lexical error: '++' is not supported; use '+= 1'
-        x++;
-         ^
+  |
+4 |     x++;
+  |      ^^
+what went wrong:
+  C-- does not have a '++' operator.
+how to fix:
+  Use '+= 1' to increase the value by one.
+      x += 1;

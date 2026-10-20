@@ -1,0 +1,10 @@
+E027_array_mixed_types.cmm:3:17: semantic error: array literal elements must all have the same primitive type
+  |
+3 |     let a = [1, "two"];
+  |                 ^
+what went wrong:
+  Every item in an array literal '[...]' must have the same primitive type.
+how to fix:
+  Make sure all elements have matching types, for example all int or all
+  string.
+      [1, 2, 3]

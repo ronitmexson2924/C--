@@ -1,0 +1,9 @@
+E012_wrong_arg_type.cmm:4:9: semantic error: argument 1 of function 'foo' must be int, got string
+  |
+4 |     foo("hi");
+  |         ^
+what went wrong:
+  Argument 1 of function 'foo' requires a int, but received a string.
+how to fix:
+  Pass a value of type int for argument 1. C-- does not convert types
+  automatically.
