@@ -667,11 +667,11 @@ table.academic-table tr:last-child td {
                     </div>
                     <div class="team-member">
                         <span class="member-name">Mit Kumar Raju Panchal</span>
-                        <span class="member-reg">24BAU0279</span>
+                        <span class="member-reg">24BAI0279</span>
                     </div>
                     <div class="team-member">
                         <span class="member-name">Garv Gupta</span>
-                        <span class="member-reg">24BAI0169</span>
+                        <span class="member-reg">24BDS0169</span>
                     </div>
                 </div>
                 <div class="meta-label" style="margin-top: 12px;">Student School</div>

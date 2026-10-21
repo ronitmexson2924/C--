@@ -83,7 +83,7 @@ def format_ast(node: ASTNode, role: Optional[str] = None, level: int = 0) -> str
     elif isinstance(node, Assign):
         fields_str = f'name={_escape_string(node.name)}, op={_escape_string(node.op)}'
     elif isinstance(node, IndexAssign):
-        fields_str = f'op={_escape_string(node.op)}'
+        fields_str = f'name={_escape_string(node.name)}, op={_escape_string(node.op)}'
     elif isinstance(node, BinaryOp):
         fields_str = f'op={_escape_string(node.op)}'
     elif isinstance(node, UnaryOp):
@@ -93,9 +93,9 @@ def format_ast(node: ASTNode, role: Optional[str] = None, level: int = 0) -> str
     elif isinstance(node, Call):
         fields_str = f'name={_escape_string(node.name)}'
     elif isinstance(node, MethodCall):
-        fields_str = f'method={_escape_string(node.method)}'
+        fields_str = f'receiver={_escape_string(node.receiver_name)}, method={_escape_string(node.method)}'
     elif isinstance(node, NewCollection):
-        type_str = f', type_arg={_escape_string(str(node.type_arg))}' if node.type_arg else ""
+        type_str = f', elem_type={_escape_string(str(node.elem_type))}' if node.elem_type else ""
         fields_str = f'kind={_escape_string(node.kind)}{type_str}'
     elif isinstance(node, CaseClause):
         vals = ", ".join(repr(v) for v in node.values)
@@ -136,7 +136,6 @@ def format_ast(node: ASTNode, role: Optional[str] = None, level: int = 0) -> str
     elif isinstance(node, Assign):
         children.append(("value", node.value))
     elif isinstance(node, IndexAssign):
-        children.append(("target", node.target))
         children.append(("index", node.index))
         children.append(("value", node.value))
     elif isinstance(node, Print):
@@ -169,7 +168,6 @@ def format_ast(node: ASTNode, role: Optional[str] = None, level: int = 0) -> str
         for arg in node.args:
             children.append(("arg", arg))
     elif isinstance(node, MethodCall):
-        children.append(("receiver", node.receiver))
         for arg in node.args:
             children.append(("arg", arg))
     elif isinstance(node, CallStmt):

@@ -244,6 +244,33 @@ class CompilerService:
             return {"success": False, "stage": "internal", "error": f"Internal Error: {str(e)}\n{traceback.format_exc()}", "exit_code": 3}
 
     @staticmethod
+    def check_code(code_str: str, help_enabled: bool = True) -> Dict[str, Any]:
+        """Run the static front-end (lex, parse, analyze) without executing the program."""
+        normalized = normalize_source(code_str)
+        source_lines = normalized.splitlines(keepends=True)
+        path_str = "playground.cmm"
+
+        try:
+            tokens = tokenize(normalized)
+        except LexError as e:
+            err_msg = render_diagnostic(e, path_str, source_lines, help_enabled=help_enabled)
+            return {"success": False, "stage": "lexer", "error": err_msg, "exit_code": 1}
+
+        try:
+            ast = parse(tokens)
+        except ParseError as e:
+            err_msg = render_diagnostic(e, path_str, source_lines, help_enabled=help_enabled)
+            return {"success": False, "stage": "parser", "error": err_msg, "exit_code": 1}
+
+        sem_errors = analyze(ast)
+        if sem_errors:
+            sem_errors.sort(key=lambda err: (err.line, err.col))
+            rendered_errors = [render_diagnostic(err, path_str, source_lines, help_enabled=help_enabled) for err in sem_errors]
+            return {"success": False, "stage": "analyzer", "error": "\n".join(rendered_errors), "exit_code": 1}
+
+        return {"success": True, "stage": "analyzer", "exit_code": 0}
+
+    @staticmethod
     def transpile_code(code_str: str, help_enabled: bool = True) -> Dict[str, Any]:
         normalized = normalize_source(code_str)
         source_lines = normalized.splitlines(keepends=True)
@@ -324,6 +351,9 @@ class CmmRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path == "/api/run":
             res = CompilerService.run_code(code, help_enabled=help_enabled)
+            self._send_json(res)
+        elif self.path == "/api/check":
+            res = CompilerService.check_code(code, help_enabled=help_enabled)
             self._send_json(res)
         elif self.path == "/api/transpile":
             res = CompilerService.transpile_code(code, help_enabled=help_enabled)
