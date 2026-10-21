@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Group 16 Case Study: AVX-512 SIMD Vectorization with Conditional Control Flow</title>
+<style>
+  /* Static TrueType instances of the website's Inter (build_pdf.py), so the PDF embeds real
+     TrueType fonts rather than Type 3 glyphs */
+{{INTER_FONT_FACES}}
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+    @bottom-center { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter Report", sans-serif; color: #6b6b75; }
+    @top-right { content: "Group 16 \2014  AVX-512 Masked Vectorization"; font: 8pt "Inter Report", sans-serif; color: #6b6b75; }
+  }
+  @page :first { @bottom-center { content: none; } @top-right { content: none; } }
+
+  :root {
+    --ink: #111114; --ink-2: #3d3d45; --ink-3: #6b6b75; --rule: #d9d9de; --tint: #f4f5f8;
+    --accent: #2443b8; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --kw: #2443b8; --type: #7e3bd0; --num: #a14b00; --str: #18794e; --cmt: #6b6b75;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 10pt/1.55 "Inter Report", "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; color: var(--ink); break-after: avoid; }
+  h2 { font-size: 15pt; margin: 22pt 0 8pt; padding-bottom: 4pt; border-bottom: 1.5pt solid var(--ink); }
+  h3 { font-size: 11.5pt; margin: 14pt 0 5pt; }
+  p { margin: 0 0 7pt; text-align: justify; hyphens: auto; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 3pt; }
+  strong { font-weight: 650; }
+  a { color: var(--accent); text-decoration: none; }
+  code { font: 8.6pt "JetBrains Mono", "DejaVu Sans Mono", monospace; background: var(--tint); padding: 0.5pt 3pt; border-radius: 2pt; }
+  pre { font: 8.2pt/1.45 "JetBrains Mono", "DejaVu Sans Mono", monospace; background: var(--tint); border: 0.6pt solid var(--rule);
+        border-left: 2.5pt solid var(--accent); border-radius: 3pt; padding: 7pt 9pt; margin: 0 0 9pt; white-space: pre-wrap;
+        break-inside: avoid; font-variant-ligatures: none; }
+  pre code { background: none; padding: 0; font: inherit; }
+  p code, li code { white-space: nowrap; hyphens: none; }
+  .listing pre { break-inside: auto; font-size: 7.4pt; line-height: 1.38; }
+  .c { color: var(--cmt); font-style: italic; }
+  .k { color: var(--kw); font-weight: 600; }
+  .t { color: var(--type); }
+  .n { color: var(--num); }
+  .s { color: var(--str); }
+
+  table { width: 100%; border-collapse: collapse; margin: 2pt 0 10pt; font-size: 8.8pt; break-inside: avoid; }
+  caption { caption-side: top; text-align: left; font-weight: 650; font-size: 9pt; margin-bottom: 4pt; color: var(--ink); }
+  th, td { padding: 4pt 6pt; border-bottom: 0.6pt solid var(--rule); text-align: left; vertical-align: top; }
+  thead th { border-bottom: 1.2pt solid var(--ink); font-weight: 650; background: var(--tint); }
+  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.hl td { background: #eef2ff; font-weight: 600; }
+
+  figure { margin: 6pt 0 12pt; break-inside: avoid; }
+  figcaption { font-size: 8.6pt; color: var(--ink-2); margin-top: 4pt; }
+  figcaption b { color: var(--ink); }
+  .note { font-size: 8.8pt; color: var(--ink-2); background: var(--tint); border-radius: 3pt; padding: 6pt 9pt; margin: 4pt 0 10pt; break-inside: avoid; }
+  .answer { border: 0.8pt solid var(--rule); border-radius: 4pt; padding: 8pt 11pt; margin: 6pt 0 12pt; break-inside: avoid; background: #fbfbfd; }
+  .answer-label { font: 600 7.6pt "Inter Report", sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 3pt; }
+  .answer p:last-child, .answer ul:last-child { margin-bottom: 0; }
+
+  /* Cover */
+  .cover { height: 257mm; display: flex; flex-direction: column; break-after: page; }
+  .cover-top { font: 600 8.5pt "Inter Report", sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .cover h1 { font-size: 27pt; line-height: 1.12; margin: 14pt 0 10pt; letter-spacing: -0.025em; }
+  .cover .subtitle { font-size: 12pt; color: var(--ink-2); max-width: 150mm; margin-bottom: 18pt; }
+  .kernel-box pre { font-size: 9.2pt; border-left-color: var(--ink); }
+  .solution { margin-top: 14pt; }
+  .solution-label { font: 600 7.6pt "Inter Report", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4pt; }
+  .solution pre { font-size: 8.4pt; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; margin: 16pt 0 0; }
+  .stat { border: 0.8pt solid var(--rule); border-radius: 4pt; padding: 9pt 10pt; }
+  .stat-v { font-size: 19pt; font-weight: 700; letter-spacing: -0.02em; }
+  .stat-l { font-size: 8pt; color: var(--ink-2); line-height: 1.35; margin-top: 2pt; }
+  .cover-meta { margin-top: auto; display: grid; grid-template-columns: 1.3fr 1fr; gap: 18pt; border-top: 1.2pt solid var(--ink); padding-top: 12pt; font-size: 9.2pt; }
+  .cover-meta h4 { margin: 0 0 5pt; font: 600 7.6pt "Inter Report", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  .members td { padding: 2.5pt 0; border: 0; }
+  .members td.reg { text-align: right; font-family: "JetBrains Mono", monospace; font-size: 8.6pt; color: var(--ink-2); }
+
+  .toc { columns: 2; column-gap: 18pt; font-size: 9.4pt; margin-bottom: 6pt; }
+  .toc div { break-inside: avoid; padding: 1.5pt 0; }
+  .toc span { color: var(--ink-3); display: inline-block; width: 18pt; }
+  .page-break { break-before: page; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; }
+  .small { font-size: 8.6pt; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ COVER -->
+<section class="cover">
+  <div class="cover-top">Case Study &middot; Group 16 &middot; Compiler Design</div>
+  <h1>AVX-512 SIMD Vectorization<br>with Conditional Control Flow</h1>
+  <div class="subtitle">
+    Removing branches with mask registers: an innovative solution built with the C-- (C Minus Minus)
+    programming language, checked against compiler output and real AVX-512 hardware.
+  </div>
+
+  <div class="kernel-box">
+<pre><code><span class="k">for</span> (<span class="t">int</span> i = <span class="n">0</span>; i &lt; N; i++) {
+    <span class="k">if</span> (A[i] &gt; <span class="n">0.0f</span>) {
+        B[i] = sqrtf(A[i]);
+    } <span class="k">else</span> {
+        B[i] = <span class="n">0.0f</span>;
+    }
+}</code></pre>
+  </div>
+
+  <div class="solution">
+    <div class="solution-label">The solution in three instructions (GCC 13, AVX-512)</div>
+<pre><code>vcmpps   $1, (%rdi,%rax), %zmm1, %k1   <span class="c">; k1 = (A &gt; 0) for 16 lanes: the "if"</span>
+vsqrtps  (%rdi,%rax), %zmm0{%k1}{z}    <span class="c">; sqrt where k1 = 1, else 0.0: both branches</span>
+vmovups  %zmm0, (%rcx,%rax)            <span class="c">; store 16 results, no data-dependent branch</span></code></pre>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-v">18&ndash;21&times;</div><div class="stat-l">fewer dynamic instructions per element</div></div>
+    <div class="stat"><div class="stat-v">32&times;</div><div class="stat-l">fewer branches per element</div></div>
+    <div class="stat"><div class="stat-v">0</div><div class="stat-l">data-dependent branch mispredictions</div></div>
+    <div class="stat"><div class="stat-v">&asymp; 19&times;</div><div class="stat-l">measured speedup on random data (3.4&times; on predictable data)</div></div>
+  </div>
+
+  <div class="cover-meta">
+    <div>
+      <h4>Submitted by</h4>
+      <table class="members">
+        {{MEMBERS}}
+      </table>
+    </div>
+    <div>
+      <h4>Supervisor</h4>
+      <div>{{SUPERVISOR}}</div>
+      <h4 style="margin-top:10pt">Institution</h4>
+      <div>{{INSTITUTION}}</div>
+      <h4 style="margin-top:10pt">Date</h4>
+      <div>{{DATE}}</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ CONTENTS + ABSTRACT -->
+<h2 style="margin-top:0">Contents</h2>
+<div class="toc">
+  <div><span>1</span>Problem statement</div>
+  <div><span>2</span>Approach and methodology</div>
+  <div><span>3</span>Question 1 &mdash; Why CMP + JMP breaks SIMD</div>
+  <div><span>4</span>Question 2 &mdash; Masked vector operations</div>
+  <div><span>5</span>Question 3 &mdash; Instruction count and performance</div>
+  <div><span>6</span>Conclusions and recommendations</div>
+  <div><span>7</span>Reproducibility</div>
+  <div><span>A</span>Appendix: C-- SIMD lab source</div>
+  <div><span>B</span>Appendix: C-- program output</div>
+  <div><span>C</span>Appendix: AVX-512 intrinsics kernels</div>
+  <div><span>R</span>References</div>
+</div>
+
+<h2>Abstract</h2>
+<p>
+  A loop containing an <code>if</code>/<code>else</code> cannot be executed by SIMD hardware as written: a conditional
+  jump steers one instruction pointer, while a 512-bit vector processes sixteen elements that may each need a different
+  path. This case study shows how AVX-512 replaces the jump with a <em>per-lane predicate</em> held in a mask register
+  (<code>k1</code>&ndash;<code>k7</code>), so both branches become a single straight-line instruction stream, and
+  measures what that is worth.
+</p>
+<p>
+  The solution is <strong>innovative in method</strong>: every claim is established three independent ways. (1) A
+  <strong>C-- &ldquo;SIMD lab&rdquo;</strong>, written in our own memory-safe language, models <code>zmm</code> registers and
+  mask registers as safe values, executes the loop four ways, proves they agree lane by lane, simulates two branch
+  predictors and estimates instruction counts and cycles. (2) <strong>GCC&nbsp;13&rsquo;s actual output</strong> shows how a
+  production compiler applies masking, and when it refuses to. (3) A <strong>hardware benchmark</strong> on an Intel Xeon
+  (Cascade Lake) times six implementations on five data distributions and directly captures the AVX-512 frequency
+  penalty.
+</p>
+<p>
+  Masking cuts dynamic instructions by 18&ndash;21&times; and branches by 32&times;, removes every data-dependent
+  misprediction, and makes run time independent of the data: about 19&times; faster than the branchy scalar loop on
+  random data and 3.4&times; on predictable data. The results also show that, on this CPU, 256-bit masking beats
+  512-bit masking because the square-root unit is the bottleneck and 512-bit instructions lower the core clock.
+</p>
+
+<!-- ================================================================ 1 -->
+<h2>1. Problem statement</h2>
+<p>A data-analysis kernel contains conditional control flow inside a loop (the kernel on the cover page). The case study asks us to:</p>
+<ol>
+  <li>Explain why traditional branching instructions (CMP + JMP) break SIMD pipelining and prevent vectorization.</li>
+  <li>Demonstrate how the compiler uses <strong>masked vector operations</strong> (AVX-512 mask registers <code>k1</code>&ndash;<code>k7</code>,
+      or SIMD blend instructions) to vectorize the loop without explicit branching.</li>
+  <li>Evaluate the instruction count and performance impact when branch misprediction penalties are eliminated via vector predication.</li>
+</ol>
+<p>We were asked to solve the problem in an innovative way. We do this by using the C-- language we built, and by checking the model against the real compiler and real hardware.</p>
+
+<!-- ================================================================ 2 -->
+<h2>2. Approach and methodology</h2>
+<table>
+  <caption>Table 1. Three independent lines of evidence</caption>
+  <thead><tr><th style="width:21%">Part</th><th style="width:27%">Artifact</th><th>What it establishes</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A. C-- SIMD lab</strong></td><td><code>masked_sqrt.cmm</code> (Appendix A)</td>
+        <td>A software model of 16-lane <code>zmm</code> registers and <code>k</code> masks. Runs the loop as scalar-branchy,
+            AVX-512 masked, AVX-512 max-predicated and AVX2 blend; proves the results identical; simulates a 2-bit and a
+            two-level branch predictor; counts instructions and estimates cycles.</td></tr>
+    <tr><td><strong>B. Compiler evidence</strong></td><td>GCC 13 assembly for the original loop</td>
+        <td>What a production compiler emits for scalar, AVX2 and AVX-512, and which flags make vectorization legal.</td></tr>
+    <tr><td><strong>C. Hardware measurement</strong></td><td><code>bench_avx512.c</code>, <code>avx2_blend.c</code> (Appendix C)</td>
+        <td>Timings of six implementations on five data distributions, IEEE corner-case checks, and a frequency-license experiment.</td></tr>
+  </tbody>
+</table>
+
+<h3>2.1 Why C--?</h3>
+<p>
+  C-- (C Minus Minus) is a statically typed, memory-safe imperative language with no pointers, no null, immutable-by-default
+  bindings and bounds-checked collections. Because C-- has no pointers or inline assembly, a vector register <em>has</em>
+  to be modelled as a value, <code>array&lt;float&gt;(16)</code>, and a mask register as <code>array&lt;bool&gt;(16)</code>.
+  Each AVX-512 instruction becomes a small pure function (<code>vcmp_gt_zero</code>, <code>vsqrt_maskz</code>,
+  <code>vload_maskz</code>, <code>vstore_mask</code>), so the lane-level semantics of predication can be read, executed
+  and tested directly.
+</p>
+<p>
+  The language's safety rules also demonstrate one of masking's key benefits. When the tail mask <code>k2</code> is
+  deliberately removed from the load, C-- does not silently read past the array as C would. It stops with
+  <code>runtime error: index out of range (index 100, length 100)</code> (error R006). The very fault that AVX-512 masked
+  loads exist to prevent becomes visible.
+</p>
+
+<h3>2.2 Experimental environment</h3>
+<table>
+  <thead><tr><th style="width:28%">Item</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>CPU</td><td>Intel Xeon @ 2.80 GHz, Cascade Lake (Skylake-SP core); AVX-512F/DQ/CD/BW/VL/VNNI; 4 vCPUs (shared VM)</td></tr>
+    <tr><td>Compiler</td><td>GCC 13.3 (Ubuntu 24.04)</td></tr>
+    <tr><td>C-- toolchain</td><td>C-- v0.2.0 reference interpreter on Python 3.13</td></tr>
+    <tr><td>Problem size</td><td>N = 100 in the C-- lab (6 full vectors + 4-lane tail); N = 65&nbsp;537 on hardware (4&nbsp;096 vectors + 1-lane tail; fits in L2)</td></tr>
+    <tr><td>Timing</td><td>Time-stamp counter (constant 2.8 GHz). Kernels interleaved per trial; median of 15 trials, each the best of 20 runs</td></tr>
+    <tr><td>Datasets</td><td>Random sign (50% positive), 90% positive, all positive, alternating sign, sorted (negatives then positives)</td></tr>
+  </tbody>
+</table>
+<div class="note">Hardware performance counters are not exposed in this virtual machine. Instruction and branch counts are therefore taken from the disassembly of the exact binaries, and run times from the time-stamp counter (TSC). Because the VM is shared, scalar timings vary between runs; Table 5 gives the typical value and the observed range over more than ten runs. The vector timings were stable to within about 2%.</div>
+
+<!-- ================================================================ 3 -->
+<h2>3. Question 1 &mdash; Why CMP + JMP breaks SIMD</h2>
+<p>At <code>-O2</code>, GCC compiles the loop into the following hot loop. The branch to <code>.L11</code> depends on the data in every iteration:</p>
+<pre><code>.L5:  movss   (%rdi,%rax), %xmm0     <span class="c">; load A[i]</span>
+      comiss  %xmm1, %xmm0           <span class="c">; CMP  A[i] with 0.0</span>
+      jbe     .L11                   <span class="c">; JMP  if A[i] &lt;= 0     &lt;-- data-dependent branch</span>
+      sqrtss  %xmm0, %xmm0           <span class="c">; then-path</span>
+      movss   %xmm0, (%rsi,%rax)
+      addq    $4, %rax
+      cmpq    %rax, %rcx
+      jne     .L5
+.L11: pxor    %xmm0, %xmm0           <span class="c">; else-path: B[i] = 0</span>
+      movss   %xmm0, (%rsi,%rax)
+      ...</code></pre>
+
+<div class="answer">
+  <div class="answer-label">Answer to Question 1</div>
+  <ol>
+    <li><strong>One program counter, many lanes.</strong> A SIMD instruction applies one operation to 16 lanes at once, but a
+      jump moves the <em>single</em> instruction pointer. When lanes disagree (some <code>A[i] &gt; 0</code>, some not), no jump
+      target is right for all of them: the branch is <em>divergent</em>. Vectorization requires the compiler to remove the
+      control flow first (<strong>if-conversion</strong>), turning the branch into data: a per-lane predicate.</li>
+    <li><strong>The branch serializes the pipeline.</strong> The CPU must predict <code>jbe</code> before <code>comiss</code>
+      completes. On random data it guesses wrong about half the time, and each wrong guess flushes the speculatively
+      executed work and restarts fetch. We measured about <strong>19&ndash;23 TSC ticks per misprediction</strong>
+      (&asymp; 20 core cycles, &sect;5.3), several times the cost of the useful work per element.</li>
+    <li><strong>Hidden side effects block if-conversion.</strong> If-conversion computes <code>sqrtf</code> on lanes the
+      program never asked for, which is only legal when that has no visible effect. <code>sqrtf</code> of a negative
+      number may set <code>errno</code>, so GCC refuses to vectorize until <code>-fno-math-errno</code> is given (Table 2).
+      Floating-point exception flags and out-of-bounds accesses in the final partial vector are the other side effects
+      that predication must suppress.</li>
+  </ol>
+</div>
+
+<table>
+  <caption>Table 2. GCC 13 vectorizer decisions for the original loop</caption>
+  <thead><tr><th>Command</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td><code>gcc -O2</code></td><td>Scalar loop with <code>comiss</code> + <code>jbe</code></td></tr>
+    <tr><td><code>gcc -O3 -mavx512f -mprefer-vector-width=512</code></td><td><strong>Not vectorized</strong>: 0 packed sqrt instructions (<code>errno</code> semantics)</td></tr>
+    <tr><td><code>gcc -O3 -mavx2 -fno-math-errno</code></td><td>Vectorized with 32-byte vectors (compare + <code>vandps</code> blend)</td></tr>
+    <tr><td><code>gcc -O3 -mavx512f -mprefer-vector-width=512 -fno-math-errno</code></td><td><strong>Vectorized with 64-byte vectors</strong> using mask register <code>k1</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================ 4 -->
+<h2>4. Question 2 &mdash; Masked vector operations</h2>
+<h3>4.1 What the compiler emits</h3>
+<p>With <code>-O3 -mavx512f -mprefer-vector-width=512 -fno-math-errno</code>, GCC if-converts the loop and predicates it with mask register <code>k1</code>:</p>
+<pre><code>.L4:  vcmpps   $1, (%rdi,%rax), %zmm1, %k1   <span class="c">; k1[l] = (0.0 &lt; A[i+l])  for 16 lanes</span>
+      vsqrtps  (%rdi,%rax), %zmm0{%k1}{z}    <span class="c">; sqrt where k1 = 1, 0.0 where k1 = 0</span>
+      vmovups  %zmm0, (%rcx,%rax)            <span class="c">; store 16 results</span>
+      addq     $64, %rax
+      cmpq     %rax, %rsi
+      jne      .L4                            <span class="c">; only branch left: loop-back, always predictable</span></code></pre>
+<div class="answer">
+  <div class="answer-label">Answer to Question 2</div>
+  <ul>
+    <li><strong><code>vcmpps &hellip; %k1</code></strong> evaluates the <code>if</code> condition for all 16 lanes and stores it
+      as 16 bits in mask register <code>k1</code>. The CMP survives as data; the JMP is gone.</li>
+    <li><strong><code>{%k1}</code></strong>: the square root only takes effect in lanes whose mask bit is 1. Masked-off lanes
+      raise no floating-point exceptions, because AVX-512 suppresses faults on inactive lanes.</li>
+    <li><strong><code>{z}</code> (zero-masking)</strong> writes 0.0 into inactive lanes. That <em>is</em> the <code>else</code>
+      branch, executed by the same instruction at no extra cost. Merge-masking (without <code>{z}</code>) would keep the
+      destination's previous value instead.</li>
+    <li>Both branches collapse into one instruction stream, and the loads fold into the memory operands of
+      <code>vcmpps</code> and <code>vsqrtps</code>.</li>
+    <li>A second mask <strong><code>k2</code></strong> handles the final partial vector, so no scalar clean-up loop is needed
+      and memory past the array is never touched (our intrinsics version, Appendix C).</li>
+  </ul>
+</div>
+
+<h3>4.2 The masks traced lane by lane in C--</h3>
+<p style="break-after: avoid">The C-- lab executes these instructions as pure functions. For N = 100 the last vector starts at element 96 and has 4 valid lanes:</p>
+<table>
+  <caption>Table 3. Last vector of the random dataset, from the C-- lab (Appendix B)</caption>
+  <thead><tr><th class="r">Lane</th><th class="r">A[i]</th><th>k2 (lane exists)</th><th>k1 = k2 AND (A &gt; 0)</th><th class="r">B[i] = zmm2 lane</th></tr></thead>
+  <tbody>
+    <tr><td class="r">0</td><td class="r">&minus;61.1725</td><td>1</td><td>0</td><td class="r">0.0</td></tr>
+    <tr><td class="r">1</td><td class="r">58.6853</td><td>1</td><td>1</td><td class="r">7.6606</td></tr>
+    <tr><td class="r">2</td><td class="r">&minus;5.3441</td><td>1</td><td>0</td><td class="r">0.0</td></tr>
+    <tr><td class="r">3</td><td class="r">&minus;17.7061</td><td>1</td><td>0</td><td class="r">0.0</td></tr>
+    <tr><td class="r">4&ndash;15</td><td class="r">&mdash;</td><td>0</td><td>0</td><td class="r">not stored</td></tr>
+  </tbody>
+</table>
+<p>Read as integers (<code>kmovw</code>): <code>k2 = 15</code> (0b1111) and <code>k1 = 2</code> (0b0010). The program checks that the masked result equals the scalar branch for every element of every dataset.</p>
+<p>The heart of the C-- model is just two instruction functions:</p>
+<pre><code><span class="c">// vcmpps k1{k2}, zmm1, zmm0, _CMP_GT_OQ   (zmm0 = 0.0; result ANDed with k2)</span>
+<span class="k">fn</span> vcmp_gt_zero(v: <span class="t">array</span>&lt;<span class="t">float</span>&gt;, k: <span class="t">array</span>&lt;<span class="t">bool</span>&gt;) -&gt; <span class="t">array</span>&lt;<span class="t">bool</span>&gt; {
+    <span class="k">mut</span> m = <span class="t">array</span>&lt;<span class="t">bool</span>&gt;(lanes512(), <span class="k">false</span>);
+    <span class="k">for</span> (<span class="k">mut</span> l = <span class="n">0</span>; l &lt; lanes512(); l = l + <span class="n">1</span>) { m[l] = k[l] &amp;&amp; v[l] &gt; <span class="n">0.0</span>; }
+    <span class="k">return</span> m;
+}
+
+<span class="c">// vsqrtps zmm2{k1}{z}, zmm1   (zero-masking IS the else-branch: inactive lanes become 0.0)</span>
+<span class="k">fn</span> vsqrt_maskz(v: <span class="t">array</span>&lt;<span class="t">float</span>&gt;, k: <span class="t">array</span>&lt;<span class="t">bool</span>&gt;) -&gt; <span class="t">array</span>&lt;<span class="t">float</span>&gt; {
+    <span class="k">mut</span> r = <span class="t">array</span>&lt;<span class="t">float</span>&gt;(lanes512(), <span class="n">0.0</span>);
+    <span class="k">for</span> (<span class="k">mut</span> l = <span class="n">0</span>; l &lt; lanes512(); l = l + <span class="n">1</span>) { <span class="k">if</span> (k[l]) { r[l] = sqrt_nr(v[l]); } }
+    <span class="k">return</span> r;
+}</code></pre>
+
+<h3>4.3 Without mask registers: compare + blend (AVX2)</h3>
+<p>Without <code>k</code> registers the predicate is a vector of all-ones/all-zeros lanes. The square root runs on <em>every</em> lane (negative lanes produce NaN and set the invalid flag), and a blend selects the result. Because the <code>else</code> value is 0.0, GCC uses a bitwise <code>vandps</code>, which is cheaper than <code>vblendvps</code>:</p>
+<pre><code>.L4:  vsqrtps   (%rdi,%rax), %ymm1          <span class="c">; sqrt of all 8 lanes, including negatives -&gt; NaN</span>
+      vcmpltps  (%rdi,%rax), %ymm2, %ymm0   <span class="c">; ymm0 = all-ones where 0 &lt; A</span>
+      vandps    %ymm1, %ymm0, %ymm0         <span class="c">; blend: keep sqrt where all-ones, else 0.0</span>
+      vmovups   %ymm0, (%rcx,%rax)</code></pre>
+<p>Without masks the remaining <code>N mod 8</code> elements need a separate scalar loop, which still contains the branch.</p>
+
+<h3>4.4 Innovation: algebraic predication</h3>
+<p>Because <code>sqrt(0) = 0</code>, the whole <code>if</code> is equivalent to <strong><code>B[i] = sqrt(max(A[i], +0.0))</code></strong>.
+<code>vmaxps</code> returns its <em>second</em> operand when either input is NaN or both are zero, so <code>max(A, +0.0)</code>
+maps negatives, <code>&minus;0.0</code> and NaN to <code>+0.0</code>: exactly the else-branch, bit for bit. We verified this
+on 0, &minus;0, &plusmn;NaN, &plusmn;&infin; and denormals. The condition disappears into arithmetic; only the tail mask
+<code>k2</code> remains.</p>
+
+<!-- ================================================================ 5 -->
+<h2>5. Question 3 &mdash; Instruction count and performance</h2>
+<h3>5.1 Dynamic instruction count</h3>
+<table>
+  <caption>Table 4. Instructions and branches per element, counted from the real hot loops</caption>
+  <thead><tr><th>Implementation</th><th class="r">Instr. / iteration</th><th class="r">Elements / iteration</th><th class="r">Instr. / element</th><th class="r">Branches / element</th><th class="r">Data-dependent branches / element</th></tr></thead>
+  <tbody>
+    <tr><td>Scalar, <code>if</code> + <code>jbe</code> (gcc -O2)</td><td class="r">8</td><td class="r">1</td><td class="r">8.000</td><td class="r">2.000</td><td class="r">1.000</td></tr>
+    <tr><td>AVX2 compare + blend (gcc -O3)</td><td class="r">7</td><td class="r">8</td><td class="r">0.875</td><td class="r">0.125</td><td class="r">0</td></tr>
+    <tr><td>AVX2 blend, hand-written</td><td class="r">9</td><td class="r">8</td><td class="r">1.125</td><td class="r">0.125</td><td class="r">0 (+ scalar tail)</td></tr>
+    <tr class="hl"><td>AVX-512 masked (gcc -O3)</td><td class="r">6</td><td class="r">16</td><td class="r">0.375</td><td class="r">0.0625</td><td class="r">0</td></tr>
+    <tr><td>AVX-512 masked, intrinsics</td><td class="r">7</td><td class="r">16</td><td class="r">0.4375</td><td class="r">0.0625</td><td class="r">0</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Masking cuts the dynamic instruction count by <strong>about 18&ndash;21&times;</strong> (8.0 &rarr; 0.375&ndash;0.44 per element).</li>
+  <li>Branches drop <strong>32&times;</strong> (2.0 &rarr; 0.0625 per element). The one that remains is the loop-back branch, which mispredicts once, at loop exit.</li>
+  <li><strong>Data-dependent branches drop from one per element to zero</strong>, so speed no longer depends on the data.</li>
+  <li>The C-- lab reaches the same result for N = 100: <strong>800 &rarr; 46 instructions</strong> and <strong>200 &rarr; 7 branches</strong>.</li>
+</ul>
+
+<h3>5.2 Measured performance</h3>
+{{FIG1}}
+<table>
+  <caption>Table 5. Time per element (TSC ticks; lower is better). All results are bit-identical to the scalar loop.</caption>
+  <thead><tr><th>Dataset</th><th class="r">Scalar with branch, typical (range)</th><th class="r">AVX-512 masked</th><th class="r">AVX2 blend</th><th class="r">Speedup (AVX-512 masked)</th></tr></thead>
+  <tbody>
+    <tr class="hl"><td>Random sign (50%)</td><td class="r">13.7 (13.7&ndash;16.5)</td><td class="r">0.725</td><td class="r">0.618</td><td class="r">&asymp; 19&times;</td></tr>
+    <tr><td>90% positive</td><td class="r">4.4 (4.4&ndash;6.6)</td><td class="r">0.725</td><td class="r">0.618</td><td class="r">&asymp; 6&times;</td></tr>
+    <tr><td>Alternating sign</td><td class="r">2.3 (2.3&ndash;4.0)</td><td class="r">0.725</td><td class="r">0.618</td><td class="r">&asymp; 3.2&times;</td></tr>
+    <tr><td>Sorted (negatives, then positives)</td><td class="r">2.47 (2.47&ndash;4.7)</td><td class="r">0.725</td><td class="r">0.618</td><td class="r">&asymp; 3.4&times;</td></tr>
+    <tr><td>All positive</td><td class="r">2.47</td><td class="r">0.725</td><td class="r">0.618</td><td class="r">&asymp; 3.4&times;</td></tr>
+  </tbody>
+</table>
+<p>The compiler-generated AVX-512 loop and the max-predicated version run at the same 0.725 ticks per element as the masked intrinsics: all three are limited by the same unit (&sect;5.5).</p>
+
+<h3>5.3 The cost of branch mispredictions</h3>
+<ul>
+  <li>The scalar loop's time varies by up to <strong>about 6&times;</strong> (2.3 &rarr; 13.7 ticks) depending only on the <em>signs</em> of the data. Every vector version takes the same time on every dataset.</li>
+  <li><strong>Penalty per misprediction.</strong> With random signs about half of the branches mispredict, since no predictor can learn random data. The alternating dataset does the same amount of work (half the elements need a square root) but is perfectly predictable. Hence (13.7 &minus; 2.3) / 0.5 &asymp; <strong>23 TSC ticks per misprediction</strong>; the 90% dataset gives &asymp; 19. That is about 7&ndash;8&nbsp;ns, or roughly 20 core cycles.</li>
+  <li><strong>83%</strong> of the scalar loop's time on random data is misprediction recovery: (13.7 &minus; 2.3) / 13.7.</li>
+</ul>
+
+<h3>5.4 Prediction quality (C-- lab)</h3>
+<table>
+  <caption>Table 6. Data-branch mispredictions for 100 elements: simulated predictors against hardware behaviour</caption>
+  <thead><tr><th>Dataset</th><th class="r">2-bit saturating counter</th><th class="r">Two-level history predictor</th><th>Hardware (ticks / element)</th></tr></thead>
+  <tbody>
+    <tr><td>Random sign</td><td class="r">52</td><td class="r">53</td><td>unpredictable (13.7)</td></tr>
+    <tr><td>90% positive</td><td class="r">10</td><td class="r">10</td><td>about 10% misses (4.4)</td></tr>
+    <tr class="hl"><td>Alternating sign</td><td class="r">50</td><td class="r">4</td><td>learned (2.3)</td></tr>
+    <tr><td>All positive</td><td class="r">2</td><td class="r">2</td><td>no misses (2.47)</td></tr>
+  </tbody>
+</table>
+<p>A textbook 2-bit counter fails on the alternating pattern; a history-based predictor, the kind real CPUs use, learns it, and the hardware confirms this. Only genuinely unpredictable data exposes the full penalty. <strong>Vector predication removes the penalty in every case</strong>, including the worst one.</p>
+
+<h3>5.5 The new bottleneck, and a surprise</h3>
+<p>Once the branches are gone, the limit is the <strong>square-root unit</strong>, not the number of instructions. Using published reciprocal-throughput figures for Skylake-SP / Cascade Lake, each measurement implies a core clock, and the results are consistent with each other:</p>
+<table>
+  <caption>Table 7. Square-root throughput and implied core clock</caption>
+  <thead><tr><th>Kernel</th><th>Square-root throughput (published)</th><th class="r">Measured (ticks / element)</th><th class="r">Implied core clock</th></tr></thead>
+  <tbody>
+    <tr><td>Scalar <code>sqrtss</code></td><td>3 cycles / element</td><td class="r">2.471</td><td class="r">3.4 GHz</td></tr>
+    <tr><td>256-bit <code>vsqrtps ymm</code></td><td>6 cycles / 8 lanes</td><td class="r">0.618</td><td class="r">3.4 GHz</td></tr>
+    <tr class="hl"><td>512-bit <code>vsqrtps zmm</code></td><td>12 cycles / 16 lanes</td><td class="r">0.725</td><td class="r">2.9 GHz</td></tr>
+  </tbody>
+</table>
+<p>On this microarchitecture a 512-bit square root has the same per-element throughput as a 256-bit one (0.75 cycles per element), so 512-bit vectors cannot be faster here, and heavy 512-bit floating-point instructions also move the core to a lower frequency &ldquo;license&rdquo;. We captured this directly by timing the <em>same</em> 256-bit masked kernel before and after a 30&nbsp;ms burst of 512-bit <code>vsqrtps</code>:</p>
+{{FIG2}}
+<p>Running the identical masked algorithm at 256-bit width (AVX-512VL) matches AVX2 on a cool core and slows to the 512-bit speed right after 512-bit work. The difference therefore comes from the clock, not from masking. This is consistent with GCC defaulting to <code>-mprefer-vector-width=256</code> for <code>-march=cascadelake</code>.</p>
+
+<h3>5.6 C-- cost model compared with the hardware</h3>
+<table>
+  <caption>Table 8. Prediction of the C-- model and measurement</caption>
+  <thead><tr><th>Case</th><th class="r">C-- model (cycles / element, N = 100)</th><th class="r">Hardware (TSC ticks / element)</th></tr></thead>
+  <tbody>
+    <tr><td>Scalar, random sign</td><td class="r">12.8</td><td class="r">13.7</td></tr>
+    <tr><td>Scalar, 90% positive</td><td class="r">4.9</td><td class="r">4.4</td></tr>
+    <tr><td>Scalar, alternating sign</td><td class="r">3.0</td><td class="r">2.3</td></tr>
+    <tr><td>Scalar, all positive</td><td class="r">3.6</td><td class="r">2.47</td></tr>
+    <tr><td>AVX-512 masked, any data</td><td class="r">1.04 (0.75 as N &rarr; &infin;)</td><td class="r">0.725</td></tr>
+  </tbody>
+</table>
+<p>A small cost model written in C-- (issue width, square-root throughput, branch predictor, misprediction penalty) reproduces the ordering and the magnitude of every result. The remaining gap comes from the small N in the model (fixed loop overhead) and from not modelling out-of-order overlap.</p>
+
+<div class="answer">
+  <div class="answer-label">Answer to Question 3</div>
+  <p>Vector predication reduces the dynamic instruction count from <strong>8 to 0.375&ndash;0.44 per element</strong> (&asymp; 18&ndash;21&times;) and the branch count from <strong>2 to 0.0625 per element</strong> (32&times;), and it eliminates all data-dependent mispredictions. Each misprediction costs about 20 core cycles, and on random data they consume 83% of the scalar loop's time. Removing them gives a measured <strong>&asymp; 19&times; speedup on random data and 3.4&times; on perfectly predictable data</strong>. Above all, run time becomes <strong>independent of the data</strong>: 0.725 ticks per element on every dataset.</p>
+</div>
+
+<!-- ================================================================ 6 -->
+<h2>6. Conclusions and recommendations</h2>
+<ol>
+  <li><strong>Branches are the obstacle, not the condition.</strong> A CMP + JMP gives all lanes one control flow and makes throughput depend on the predictor. Turning the condition into a per-lane predicate keeps the computation and removes the control flow.</li>
+  <li><strong>AVX-512 masks make predication complete.</strong> <code>vcmpps &rarr; k1</code> followed by <code>vsqrtps{k1}{z}</code> executes both branches in one instruction: zero-masking supplies the <code>else</code>, masked lanes raise no exceptions, and a tail mask <code>k2</code> replaces the scalar epilogue without touching memory past the array.</li>
+  <li><strong>The payoff</strong> is &asymp; 18&ndash;21&times; fewer instructions, 32&times; fewer branches, zero data-dependent mispredictions, and 3.4&ndash;19&times; measured speedups with data-independent run time.</li>
+  <li><strong>Choose the vector width per CPU.</strong> On Cascade Lake the square-root unit, not the instruction count, is the limit, and 512-bit instructions lower the clock. AVX-512VL masking at 256 bits is the fastest choice here. On CPUs without this frequency penalty (Ice Lake and later, AMD Zen 4) 512-bit masking is expected to win.</li>
+  <li><strong>Look for algebraic predication.</strong> When the <code>else</code> value equals the function at a boundary (here <code>sqrt(0) = 0</code>), <code>sqrt(max(A, 0))</code> removes the condition altogether.</li>
+  <li><strong>Compiler flags decide legality.</strong> Without <code>-fno-math-errno</code>, <code>errno</code> semantics prevent GCC from vectorizing at all.</li>
+  <li><strong>Safe languages make SIMD semantics testable.</strong> Modelling registers as values in C-- exposed the lane semantics, proved the four strategies equivalent, and turned the out-of-bounds tail access that <code>k2</code> prevents into a reported runtime error.</li>
+</ol>
+
+<!-- ================================================================ 7 -->
+<h2>7. Reproducibility</h2>
+<p>All sources and results are in the C-- repository, folder <code>case_studies/simd_masked_vectorization/</code> (<a href="https://github.com/ronitmexson2924/C--">github.com/ronitmexson2924/C--</a>). One command regenerates every result:</p>
+<pre><code>./case_studies/simd_masked_vectorization/run.sh
+
+<span class="c"># or only the C-- SIMD lab (about 0.5 s):</span>
+python3 -m cmm run case_studies/simd_masked_vectorization/masked_sqrt.cmm</code></pre>
+<table class="small">
+  <thead><tr><th style="width:34%">File</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td><code>masked_sqrt.cmm</code></td><td>C-- SIMD lab (Appendix A)</td></tr>
+    <tr><td><code>bench_avx512.c</code>, <code>avx2_blend.c</code></td><td>Hardware benchmark and AVX2-only kernel</td></tr>
+    <tr><td><code>run.sh</code></td><td>Builds and runs everything, writes <code>results/</code></td></tr>
+    <tr><td><code>results/cmm_output.txt</code></td><td>C-- lab output (Appendix B)</td></tr>
+    <tr><td><code>results/unmasked_tail_trap.txt</code></td><td>C-- run without the tail mask: stopped by error R006</td></tr>
+    <tr><td><code>results/vectorizer_report.txt</code>, <code>asm_*.s</code></td><td>GCC vectorizer decisions and assembly for the original loop</td></tr>
+    <tr><td><code>results/asm_benchmark_kernels.txt</code>, <code>bench_output.txt</code></td><td>Disassembly of every benchmarked kernel; one complete benchmark run</td></tr>
+  </tbody>
+</table>
+<div class="note"><strong>Model notes.</strong> C-- floats are 64-bit; the 16-lane width models float32 in a 512-bit register. Square roots in the C-- lab use Newton&ndash;Raphson iteration (C-- has no built-in square root), so the program checks B&sup2; &asymp; A rather than comparing with a library result. The C99 backend of C-- does not yet support arrays, so the lab runs on the C-- reference interpreter.</div>
+
+<!-- ================================================================ APPENDICES -->
+<h2 class="page-break">Appendix A. C-- SIMD lab source (<code>masked_sqrt.cmm</code>)</h2>
+<div class="listing"><pre><code>{{CMM_SOURCE}}</code></pre></div>
+
+<h2 class="page-break">Appendix B. C-- program output (dataset 1 and lane trace)</h2>
+<p class="small">Each <code>print</code> writes one value per line (C-- has no string concatenation); each label line is followed by its values in order. Full output: <code>results/cmm_output.txt</code>.</p>
+<div class="two-col">
+  <div class="listing"><pre><code>{{CMM_OUTPUT_A}}</code></pre></div>
+  <div class="listing"><pre><code>{{CMM_OUTPUT_B}}</code></pre></div>
+</div>
+
+<h2 class="page-break">Appendix C. AVX-512 intrinsics kernels (from <code>bench_avx512.c</code>)</h2>
+<div class="listing"><pre><code>{{KERNELS}}</code></pre></div>
+
+<h2>References</h2>
+<ol class="small">
+  <li>Intel Corporation. <em>Intel&reg; 64 and IA-32 Architectures Software Developer&rsquo;s Manual</em>, Vol. 2 (VCMPPS, VSQRTPS, VMAXPS, VBLENDVPS, opmask registers) and Vol. 1, Ch. 15 (AVX-512 programming).</li>
+  <li>Intel Corporation. <em>Intel&reg; Intrinsics Guide</em>: <code>_mm512_cmp_ps_mask</code>, <code>_mm512_maskz_sqrt_ps</code>, <code>_mm512_mask_storeu_ps</code>, <code>_mm512_maskz_loadu_ps</code>.</li>
+  <li>Intel Corporation. <em>Intel&reg; 64 and IA-32 Architectures Optimization Reference Manual</em>: AVX-512 frequency behaviour and branch misprediction.</li>
+  <li>A. Fog. <em>Instruction tables: lists of instruction latencies, throughputs and micro-operation breakdowns for Intel, AMD and VIA CPUs.</em> Technical University of Denmark.</li>
+  <li>A. Abel and J. Reineke. <em>uops.info: Characterizing Latency, Throughput, and Port Usage of Instructions on Intel Microarchitectures.</em> ASPLOS 2019.</li>
+  <li>J. R. Allen, K. Kennedy, C. Porterfield and J. Warren. <em>Conversion of Control Dependence to Data Dependence.</em> POPL 1983 (if-conversion).</li>
+  <li>T.-Y. Yeh and Y. N. Patt. <em>Two-Level Adaptive Training Branch Prediction.</em> MICRO 1991.</li>
+  <li>GCC Team. <em>Using the GNU Compiler Collection</em>: <code>-fno-math-errno</code>, <code>-mprefer-vector-width</code>, <code>-fopt-info-vec</code>.</li>
+  <li>C-- (C Minus Minus) project. <em>Language Guide and Specification</em>, v0.2.0. github.com/ronitmexson2924/C--.</li>
+</ol>
+
+</body>
+</html>
