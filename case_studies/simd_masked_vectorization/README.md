@@ -12,6 +12,9 @@ for (int i = 0; i < N; i++) {
 }
 ```
 
+> **Submission PDF:** [`Group16_Case_Study_AVX512_Masked_Vectorization.pdf`](Group16_Case_Study_AVX512_Masked_Vectorization.pdf)
+> (23 pages; rebuild with `python3 case_studies/simd_masked_vectorization/report/build_pdf.py`).
+
 **Questions**
 
 1. Why do traditional branches (CMP + JMP) break SIMD pipelining and prevent vectorization?
@@ -311,6 +314,7 @@ from ignoring out-of-order overlap.
 | [`bench_avx512.c`](bench_avx512.c) | Hardware benchmark: scalar, compiler AVX-512, masked and max intrinsics, AVX-512VL 256-bit; frequency experiment |
 | [`avx2_blend.c`](avx2_blend.c) | AVX2-only compare + blend kernel (built with `-march=haswell` so the compiler cannot substitute masks) |
 | [`run.sh`](run.sh) | Rebuilds and reruns everything and regenerates `results/` |
+| [`report/`](report/) | PDF report source: `report.html` template and `build_pdf.py` (headless Chromium; `fonttools` for embedded TrueType text) |
 | `results/cmm_output.txt` | Output of the C-- lab |
 | `results/unmasked_tail_trap.txt` | C-- run with the tail mask removed: stopped by `R006` |
 | `results/vectorizer_report.txt` | GCC vectorizer decisions with and without `-fno-math-errno` |
