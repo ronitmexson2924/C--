@@ -78,9 +78,13 @@ python3 web/server.py
 Open **`http://localhost:8000`** in any web browser.
 
 ### Key Capabilities of the Web Studio
-- **Top Navigation Bar:** Tabs for **Playground & Transpiler**, **Overview**, **Key Features**, **Compiler Pipeline**, and **Syntax Cheatsheet**.
-- **Split-Screen Studio:** Line-numbered code editor on the left; real-time execution output console & C99 transpiled code viewer on the right.
-- **One-Click Transpilation:** Click **"⚙ Transpile to C"** to transpose the active C-- code into hardened ISO C99.
+- **Top Navigation Bar:** Deep-linkable sections (`#playground`, `#overview`, `#features`, `#pipeline`, `#syntax`) for the **Playground**, **Overview**, **Architecture**, **Pipeline**, and **Reference** views, with browser back/forward support.
+- **Split-Screen Studio:** Syntax-highlighted editor with active-line tracking, auto-indent, bracket/quote pairing, block indent/outdent, and line-comment toggling; resizable output pane (drag or arrow keys) that remembers its width.
+- **Live Diagnostics:** Static checks run as you type (via the side-effect-free `/api/check` endpoint). Errors are marked in the gutter, listed in a **Problems** panel, and every `file:line:col` location is clickable to jump to the source.
+- **Compiler Inspectors:** Console, **C99** (highlighted), **AST**, and **Tokens** views. A stage trace shows which phase (Lex → Parse → Analyze → Execute) passed or failed, and clicking a token locates it in the editor.
+- **One-Click Transpilation:** Click **Transpile C99** (`Ctrl/⌘+Shift+Enter`) to lower the active program into hardened ISO C99.
+- **Command Palette & Shortcuts:** `Ctrl/⌘+K` opens a searchable palette of actions, sections, and examples; `?` lists all keyboard shortcuts.
+- **Drafts & Sharing:** The editor auto-saves to local storage; copy a shareable link that encodes the program, or download it as a `.cmm` file.
 - **Preset Library:** 7 preloaded examples covering recursion, lists, stacks/queues, value semantics, switch-case, C99 transpilation, and typo diagnostics.
 - **Academic PDF Report:** Download or view the comprehensive academic report right from the top header bar.
 

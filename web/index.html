@@ -5,73 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C-- Compiler Explorer &amp; Language Specification</title>
     <meta name="description" content="Interactive compiler explorer, ISO C99 transpiler, and formal specification for C-- (C Minus Minus), a memory-safe imperative programming language.">
-    
-    <!-- Google Fonts: Inter & JetBrains Mono / Fira Code -->
+    <meta name="color-scheme" content="dark light">
+    <link rel="icon" type="image/png" href="/assets/cmm-icon-32.png">
+
+    <!-- Resolve theme before first paint to avoid a flash of the wrong palette -->
+    <script>
+        (function () {
+            var theme = "dark";
+            try {
+                var saved = localStorage.getItem("cmm-theme");
+                if (saved === "light" || saved === "dark") theme = saved;
+                else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+            } catch (e) {}
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    
-    <!-- Stylesheet -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-theme">
-    <!-- Top Navigation Bar -->
+<body>
+    <a class="skip-link" href="#main-container">Skip to content</a>
+
+    <!-- ==================================================================
+         TOP NAVIGATION
+         ================================================================== -->
     <header class="app-header" id="main-header">
         <div class="header-left">
-            <div class="brand-logo-container">
-                <img src="/assets/cmm-icon-64.png" alt="C--" class="brand-logo" onerror="this.style.display='none'">
-                <div class="brand-text">
-                    <span class="brand-title">C<span class="brand-minus">--</span></span>
-                    <span class="brand-version">v0.2.0</span>
-                </div>
-            </div>
-            <span class="header-divider" aria-hidden="true">/</span>
-            <div class="header-tagline">Compiler Explorer</div>
+            <a class="brand" href="#playground" aria-label="C-- home">
+                <img src="/assets/cmm-icon-64.png" alt="" class="brand-logo" width="22" height="22" onerror="this.style.display='none'">
+                <span class="brand-title">C<span class="brand-minus">--</span></span>
+                <span class="brand-version">v0.2.0</span>
+            </a>
         </div>
 
-        <nav class="nav-tabs" id="nav-tabs" aria-label="Primary Navigation">
-            <button class="nav-tab active" data-tab="playground" id="tab-btn-playground">
-                Playground
-            </button>
-            <button class="nav-tab" data-tab="overview" id="tab-btn-overview">
-                Overview
-            </button>
-            <button class="nav-tab" data-tab="features" id="tab-btn-features">
-                Architecture
-            </button>
-            <button class="nav-tab" data-tab="pipeline" id="tab-btn-pipeline">
-                Pipeline
-            </button>
-            <button class="nav-tab" data-tab="syntax" id="tab-btn-syntax">
-                Reference
-            </button>
+        <nav class="nav-tabs" id="nav-tabs" role="tablist" aria-label="Primary navigation">
+            <button class="nav-tab active" data-tab="playground" id="tab-btn-playground" role="tab" aria-selected="true" aria-controls="view-playground">Playground</button>
+            <button class="nav-tab" data-tab="overview" id="tab-btn-overview" role="tab" aria-selected="false" aria-controls="view-overview">Overview</button>
+            <button class="nav-tab" data-tab="features" id="tab-btn-features" role="tab" aria-selected="false" aria-controls="view-features">Architecture</button>
+            <button class="nav-tab" data-tab="pipeline" id="tab-btn-pipeline" role="tab" aria-selected="false" aria-controls="view-pipeline">Pipeline</button>
+            <button class="nav-tab" data-tab="syntax" id="tab-btn-syntax" role="tab" aria-selected="false" aria-controls="view-syntax">Reference</button>
+            <span class="nav-indicator" id="nav-indicator" aria-hidden="true"></span>
         </nav>
 
         <div class="header-right">
-            <div class="connection-status" id="connection-status" title="Compiler Backend Status">
-                <span class="status-dot online"></span>
-                <span class="status-label" id="status-label">Online</span>
+            <button class="cmdk-trigger" id="btn-command-palette" title="Command palette" aria-label="Open command palette">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <span class="cmdk-label">Search commands</span>
+                <kbd class="kbd" data-mod-key>Ctrl K</kbd>
+            </button>
+
+            <div class="connection-status" id="connection-status" title="Compiler backend status" role="status">
+                <span class="status-dot pending"></span>
+                <span class="status-label" id="status-label">Connecting</span>
             </div>
 
             <button class="icon-btn" id="btn-theme-toggle" title="Toggle color theme" aria-label="Toggle color theme">
-                <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="4"></circle>
                     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
                 </svg>
-                <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
 
-            <a href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener" class="doc-link-btn" title="Open Formal Language Specification (PDF)">
-                <span>Specification PDF</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M7 17L17 7M7 7h10v10"></path>
-                </svg>
+            <a href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener" class="doc-link-btn" title="Open formal language specification (PDF)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <span>Spec</span>
             </a>
 
-            <a href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener" class="doc-link-btn" title="View Source on GitHub">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <a href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener" class="doc-link-btn" title="View source on GitHub">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
                 </svg>
                 <span>GitHub</span>
@@ -79,17 +87,15 @@
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="app-container" id="main-container">
+    <main class="app-container" id="main-container" tabindex="-1">
 
-        <!-- ================================================================
-             VIEW 1: PLAYGROUND & COMPILER STUDIO
-             ================================================================ -->
-        <section class="tab-view active" id="view-playground">
-            <!-- Playground Control Toolbar -->
+        <!-- ==============================================================
+             VIEW 1: PLAYGROUND
+             ============================================================== -->
+        <section class="tab-view active" id="view-playground" role="tabpanel" aria-labelledby="tab-btn-playground">
             <div class="playground-toolbar" id="playground-toolbar">
                 <div class="toolbar-left">
-                    <label for="preset-select" class="toolbar-label">Preset</label>
+                    <label for="preset-select" class="toolbar-label">Example</label>
                     <div class="select-wrapper">
                         <select id="preset-select" class="preset-dropdown">
                             <option value="factorial">01 &mdash; Factorial &amp; Recursion</option>
@@ -105,173 +111,216 @@
                 </div>
 
                 <div class="toolbar-right">
-                    <div class="action-group-primary">
-                        <button class="btn btn-primary" id="btn-run" title="Execute in C-- Reference Interpreter (Ctrl+Enter)">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                    <div class="action-group-inspect" role="group" aria-label="Inspect">
+                        <button class="btn btn-ghost" id="btn-check" title="Run static type &amp; scope analysis">Type Check</button>
+                        <button class="btn btn-ghost" id="btn-ast" title="Inspect Abstract Syntax Tree">AST</button>
+                        <button class="btn btn-ghost" id="btn-tokens" title="Inspect lexer token stream">Tokens</button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <div class="action-group-utility" role="group" aria-label="Editor utilities">
+                        <button class="btn btn-ghost btn-icon-only" id="btn-reset" title="Reset editor to selected example" aria-label="Reset editor">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
                             </svg>
-                            <span>Run</span>
-                            <kbd class="btn-kbd">&#8984;&#9166;</kbd>
                         </button>
-                        <button class="btn btn-secondary btn-transpile" id="btn-transpile" title="Transpile C-- AST to ISO C99 (Ctrl+Shift+Enter)">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <button class="btn btn-ghost btn-icon-only" id="btn-share" title="Copy shareable link" aria-label="Copy shareable link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        </button>
+                        <button class="btn btn-ghost btn-icon-only" id="btn-download" title="Download source (.cmm)" aria-label="Download source">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <div class="action-group-primary">
+                        <button class="btn btn-secondary btn-transpile" id="btn-transpile" title="Transpile to ISO C99 (Ctrl+Shift+Enter)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="16 18 22 12 16 6"></polyline>
                                 <polyline points="8 6 2 12 8 18"></polyline>
                             </svg>
                             <span>Transpile C99</span>
                         </button>
-                    </div>
-
-                    <span class="toolbar-sep" aria-hidden="true"></span>
-
-                    <div class="action-group-inspect">
-                        <button class="btn btn-ghost" id="btn-check" title="Run static type &amp; scope analysis">
-                            Type Check
-                        </button>
-                        <button class="btn btn-ghost" id="btn-ast" title="Inspect Abstract Syntax Tree">
-                            AST
-                        </button>
-                        <button class="btn btn-ghost" id="btn-tokens" title="Inspect Lexer Token Stream">
-                            Tokens
+                        <button class="btn btn-primary" id="btn-run" title="Run in the reference interpreter (Ctrl+Enter)">
+                            <svg class="btn-icon-play" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                            </svg>
+                            <span class="btn-spinner" aria-hidden="true"></span>
+                            <span>Run</span>
+                            <kbd class="btn-kbd" data-mod-key>Ctrl &#9166;</kbd>
                         </button>
                     </div>
-
-                    <span class="toolbar-sep" aria-hidden="true"></span>
-
-                    <button class="btn btn-ghost btn-icon-only" id="btn-reset" title="Reset editor to selected preset">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                            <path d="M3 3v5h5"></path>
-                        </svg>
-                        <span>Reset</span>
-                    </button>
                 </div>
             </div>
 
-            <!-- Split-Screen Editor & Output Studio -->
             <div class="studio-split-pane" id="studio-split-pane">
-                <!-- Left Pane: Code Editor -->
+                <!-- Editor -->
                 <div class="studio-pane editor-pane" id="editor-pane">
                     <div class="pane-header">
                         <div class="pane-title">
-                            <svg class="pane-file-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="pane-file-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span class="pane-filename">playground.cmm</span>
-                            <span class="badge badge-lang">UTF-8</span>
+                            <span class="save-indicator" id="save-indicator" title="Draft is saved locally in this browser">Saved</span>
                         </div>
                         <div class="pane-meta">
                             <span id="editor-line-col">Ln 1, Col 1</span>
-                            <span class="meta-divider">&middot;</span>
+                            <span class="meta-divider" aria-hidden="true">&middot;</span>
                             <span id="editor-char-count">0 chars</span>
                             <button class="pane-action-btn" id="btn-copy-source" title="Copy source code">Copy</button>
                         </div>
                     </div>
-                    
+
                     <div class="editor-wrapper" id="editor-wrapper">
-                        <div class="line-gutter" id="line-gutter" aria-hidden="true">1</div>
-                        <textarea id="code-editor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="// Enter C-- source code..."></textarea>
+                        <div class="line-gutter" id="line-gutter" aria-hidden="true"><div class="gutter-inner" id="gutter-inner"></div></div>
+                        <div class="editor-surface" id="editor-surface">
+                            <div class="editor-decorations" id="editor-decorations" aria-hidden="true">
+                                <div class="active-line" id="active-line"></div>
+                            </div>
+                            <pre class="editor-highlight" id="editor-highlight" aria-hidden="true"></pre>
+                            <textarea id="code-editor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="C-- source code" placeholder="// Write C-- here..."></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Interactive Split Resizer -->
-                <div class="pane-resizer" id="pane-resizer" title="Drag to resize panes" role="separator" aria-orientation="vertical"></div>
+                <div class="pane-resizer" id="pane-resizer" title="Drag to resize. Double-click to reset." role="separator" aria-orientation="vertical" aria-label="Resize panes" tabindex="0"></div>
 
-                <!-- Right Pane: Output Console & Compiler Inspector -->
+                <!-- Output -->
                 <div class="studio-pane output-pane" id="output-pane">
                     <div class="pane-header output-header">
-                        <div class="output-tabs" id="output-tabs" role="tablist">
-                            <button class="output-tab active" data-output="console" id="out-tab-console" role="tab">
-                                Console
-                            </button>
-                            <button class="output-tab" data-output="c99" id="out-tab-c99" role="tab">
-                                C99 Output
-                            </button>
-                            <button class="output-tab" data-output="ast" id="out-tab-ast" role="tab">
-                                AST
-                            </button>
-                            <button class="output-tab" data-output="tokens" id="out-tab-tokens" role="tab">
-                                Tokens
-                            </button>
+                        <div class="output-tabs" id="output-tabs" role="tablist" aria-label="Output">
+                            <button class="output-tab active" data-output="console" id="out-tab-console" role="tab" aria-selected="true">Console</button>
+                            <button class="output-tab" data-output="problems" id="out-tab-problems" role="tab" aria-selected="false">Problems <span class="tab-count" id="problems-count" hidden>0</span></button>
+                            <button class="output-tab" data-output="c99" id="out-tab-c99" role="tab" aria-selected="false">C99</button>
+                            <button class="output-tab" data-output="ast" id="out-tab-ast" role="tab" aria-selected="false">AST</button>
+                            <button class="output-tab" data-output="tokens" id="out-tab-tokens" role="tab" aria-selected="false">Tokens</button>
                         </div>
                         <div class="output-actions">
-                            <span class="status-pill status-ready" id="execution-status-pill">Ready</span>
-                            <button class="btn-copy" id="btn-copy-output" title="Copy active output to clipboard">
-                                Copy
-                            </button>
-                            <button class="btn-clear" id="btn-clear-output" title="Clear output console">
-                                Clear
-                            </button>
+                            <span class="status-pill status-ready" id="execution-status-pill" role="status" aria-live="polite">Ready</span>
+                            <button class="btn-copy" id="btn-copy-output" title="Copy active output">Copy</button>
+                            <button class="btn-clear" id="btn-clear-output" title="Clear output">Clear</button>
                         </div>
                     </div>
 
-                    <!-- Output Content Views -->
+                    <div class="pipeline-trace" id="pipeline-trace" aria-label="Compilation stages">
+                        <span class="trace-step" data-stage="lexer">Lex</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="parser">Parse</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="analyzer">Analyze</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="backend">Execute</span>
+                        <span class="trace-meta" id="trace-meta"></span>
+                    </div>
+
                     <div class="output-content-container" id="output-content-container">
-                        <!-- View A: Execution Console -->
-                        <div class="output-view active" id="output-view-console">
-                            <pre class="terminal-display" id="terminal-display"><span class="terminal-dim">// Press Run (Ctrl+Enter) to execute in the C-- reference interpreter.</span></pre>
+                        <div class="output-view active" id="output-view-console" role="tabpanel">
+                            <pre class="terminal-display" id="terminal-display"><span class="terminal-dim">// Press Run to execute in the C-- reference interpreter.</span></pre>
                         </div>
-
-                        <!-- View B: Transpiled C99 Code -->
-                        <div class="output-view" id="output-view-c99">
-                            <pre class="code-display" id="c99-display"><span class="terminal-dim">// Select "Transpile C99" to emit bounds-checked ISO C99 source.</span></pre>
+                        <div class="output-view" id="output-view-problems" role="tabpanel">
+                            <div class="problems-list" id="problems-list">
+                                <div class="empty-state">
+                                    <div class="empty-title">No problems detected</div>
+                                    <div class="empty-sub">Run or type-check your program to collect diagnostics.</div>
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- View C: AST Representation -->
-                        <div class="output-view" id="output-view-ast">
-                            <pre class="code-display" id="ast-display"><span class="terminal-dim">// Select "AST" to inspect the typed Abstract Syntax Tree.</span></pre>
+                        <div class="output-view" id="output-view-c99" role="tabpanel">
+                            <pre class="code-display" id="c99-display"><span class="terminal-dim">// Transpile to emit bounds-checked ISO C99 source.</span></pre>
                         </div>
-
-                        <!-- View D: Lexical Tokens -->
-                        <div class="output-view" id="output-view-tokens">
-                            <pre class="code-display" id="tokens-display"><span class="terminal-dim">// Select "Tokens" to inspect the lexical token stream.</span></pre>
+                        <div class="output-view" id="output-view-ast" role="tabpanel">
+                            <pre class="code-display" id="ast-display"><span class="terminal-dim">// Inspect the Abstract Syntax Tree produced by the parser.</span></pre>
+                        </div>
+                        <div class="output-view" id="output-view-tokens" role="tabpanel">
+                            <pre class="code-display" id="tokens-display"><span class="terminal-dim">// Inspect the lexical token stream. Click a token to locate it in the editor.</span></pre>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ================================================================
+        <!-- ==============================================================
              VIEW 2: OVERVIEW
-             ================================================================ -->
-        <section class="tab-view" id="view-overview">
+             ============================================================== -->
+        <section class="tab-view" id="view-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
             <div class="content-wrapper">
-                <div class="doc-header">
-                    <div class="doc-eyebrow">LANGUAGE SPECIFICATION &amp; RATIONALE</div>
-                    <h1 class="doc-title">C-- (C Minus Minus)</h1>
-                    <p class="doc-lead">
-                        An imperative systems programming language designed around <strong>Safety by Removal</strong>. 
-                        C-- retains the deterministic control flow and minimal runtime footprint of ISO C while eliminating 
-                        entire classes of memory-corruption vulnerabilities at the grammar level.
-                    </p>
+                <div class="hero">
+                    <div class="hero-copy">
+                        <div class="doc-eyebrow">Language specification &amp; rationale</div>
+                        <h1 class="hero-title">Memory safety by removal,<br>not by runtime.</h1>
+                        <p class="doc-lead">
+                            C-- keeps the deterministic control flow and small runtime footprint of ISO C, and removes the
+                            constructs behind entire classes of memory-corruption bugs at the grammar level.
+                        </p>
+                        <div class="hero-actions">
+                            <a class="btn btn-primary btn-lg" href="#playground">Open the playground</a>
+                            <a class="btn btn-secondary btn-lg" href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener">Read the specification</a>
+                        </div>
+                        <div class="install-snippet">
+                            <span class="install-prompt" aria-hidden="true">$</span>
+                            <code id="install-cmd">python3 -m cmm run demo.cmm</code>
+                            <button class="install-copy" data-copy-target="install-cmd" title="Copy command" aria-label="Copy command">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-code">
+                        <div class="hero-code-header">
+                            <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="hero-code-file">factorial.cmm</span>
+                            <button class="btn-load-snippet" data-snippet="factorial" title="Load example in Playground">Run in playground &rarr;</button>
+                        </div>
+<pre class="syntax-code"><code><span class="token-kw">module</span> main;
+
+<span class="token-kw">fn</span> <span class="token-fn">factorial</span>(n: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
+    <span class="token-kw">if</span> (n &lt;= <span class="token-num">1</span>) { <span class="token-kw">return</span> <span class="token-num">1</span>; }
+    <span class="token-kw">return</span> n * <span class="token-fn">factorial</span>(n - <span class="token-num">1</span>);
+}
+
+<span class="token-kw">fn</span> <span class="token-kw">main</span>() {
+    <span class="token-kw">let</span> result = <span class="token-fn">factorial</span>(<span class="token-num">6</span>);
+    <span class="token-kw">print</span>(result);   <span class="token-comment">// 720</span>
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat"><span class="stat-val">60</span><span class="stat-lbl">Diagnostic codes</span></div>
+                    <div class="stat"><span class="stat-val">10</span><span class="stat-lbl">Precedence tiers</span></div>
+                    <div class="stat"><span class="stat-val">2</span><span class="stat-lbl">Execution backends</span></div>
+                    <div class="stat"><span class="stat-val">0</span><span class="stat-lbl">Runtime dependencies</span></div>
                 </div>
 
                 <div class="spec-comparison-grid">
                     <div class="spec-panel">
                         <div class="spec-panel-header">
                             <span class="spec-index">01</span>
-                            <h2 class="spec-panel-title">Eliminated Hazards</h2>
+                            <h2 class="spec-panel-title">Eliminated hazards</h2>
                         </div>
                         <p class="spec-panel-body">
-                            Empirical security analyses across major systems codebases consistently attribute ~70% of high-severity vulnerabilities to memory unsafety. C-- removes the underlying syntactic constructs outright:
+                            Security analyses of major systems codebases consistently attribute ~70% of high-severity vulnerabilities to memory unsafety. C-- removes the underlying constructs outright:
                         </p>
                         <dl class="spec-list">
                             <div class="spec-list-row">
-                                <dt>Raw Pointers</dt>
-                                <dd>No address-of (<code>&amp;</code>), dereference (<code>*</code>), or pointer arithmetic operations exist in the grammar.</dd>
+                                <dt>Raw pointers</dt>
+                                <dd>No address-of (<code>&amp;</code>), dereference (<code>*</code>), or pointer arithmetic exists in the grammar.</dd>
                             </div>
                             <div class="spec-list-row">
-                                <dt>Null References</dt>
-                                <dd>Absent by construction. Every variable binding requires a statically verified initial value.</dd>
+                                <dt>Null references</dt>
+                                <dd>Absent by construction. Every binding requires a statically verified initial value.</dd>
                             </div>
                             <div class="spec-list-row">
-                                <dt>Unchecked Indexing</dt>
-                                <dd>All collection accesses validate bounds at runtime with deterministic traps on out-of-bounds indices.</dd>
+                                <dt>Unchecked indexing</dt>
+                                <dd>All collection accesses validate bounds at runtime with deterministic traps.</dd>
                             </div>
                             <div class="spec-list-row">
-                                <dt>Implicit Coercions</dt>
-                                <dd>Strict static typing prevents silent narrowing conversions, signed/unsigned mismatches, and truthy casts.</dd>
+                                <dt>Implicit coercions</dt>
+                                <dd>Strict static typing prevents silent narrowing, signed/unsigned mismatches, and truthy casts.</dd>
                             </div>
                         </dl>
                     </div>
@@ -279,87 +328,91 @@
                     <div class="spec-panel">
                         <div class="spec-panel-header">
                             <span class="spec-index">02</span>
-                            <h2 class="spec-panel-title">Design Philosophy</h2>
+                            <h2 class="spec-panel-title">Design philosophy</h2>
                         </div>
                         <p class="spec-panel-body">
-                            Modern memory-safe languages typically trade language simplicity for expressive alias tracking (such as borrow checking and lifetime annotations) or heavy garbage collection runtimes.
+                            Modern memory-safe languages typically trade simplicity for expressive alias tracking (borrow checking, lifetime annotations) or a garbage-collected runtime.
                         </p>
                         <blockquote class="spec-quote">
-                            "Where verification of arbitrary aliasing is complex, C-- enforces deep-copy value semantics and lexical immutability by default."
+                            Where verification of arbitrary aliasing is complex, C-- enforces deep-copy value semantics and lexical immutability by default.
                         </blockquote>
                         <p class="spec-panel-body">
                             By treating composite collections (<code>array</code>, <code>list</code>, <code>stack</code>, <code>queue</code>) as isolated values on assignment and argument passing, C-- guarantees alias freedom without lifetime annotations.
                         </p>
-                        <div class="metrics-strip">
-                            <div class="metric-cell">
-                                <span class="metric-val">60</span>
-                                <span class="metric-lbl">Diagnostic Codes</span>
-                            </div>
-                            <div class="metric-cell">
-                                <span class="metric-val">10</span>
-                                <span class="metric-lbl">Precedence Tiers</span>
-                            </div>
-                            <div class="metric-cell">
-                                <span class="metric-val">2</span>
-                                <span class="metric-lbl">Execution Backends</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <div class="academic-credit-card">
-                    <div class="credit-header">
+                <section class="team-section" aria-labelledby="team-heading">
+                    <div class="section-header">
                         <div>
-                            <div class="credit-tag">Academic Metadata &middot; Compiler Design Capstone</div>
-                            <h3 class="credit-title">School of Computer Science &amp; Engineering (SCOPE)</h3>
+                            <div class="doc-eyebrow">Compiler Design Capstone &middot; Session 2024&ndash;2025</div>
+                            <h2 class="section-title" id="team-heading">The team</h2>
                         </div>
-                        <span class="credit-session">Session 2024&ndash;2025</span>
+                        <span class="section-meta">School of Computer Science &amp; Engineering (SCOPE)</span>
                     </div>
-                    <div class="credit-body">
-                        <div class="credit-col">
-                            <div class="credit-label">Engineering Team</div>
-                            <div class="credit-table">
-                                <div class="credit-row">
-                                    <span class="credit-name">Ronit Mexson</span>
-                                    <span class="badge-reg">24BAI0036</span>
-                                </div>
-                                <div class="credit-row">
-                                    <span class="credit-name">Mit Kumar Raju Panchal</span>
-                                    <span class="badge-reg">24BAU0279</span>
-                                </div>
-                                <div class="credit-row">
-                                    <span class="credit-name">Garv Gupta</span>
-                                    <span class="badge-reg">24BAI0169</span>
-                                </div>
+
+                    <div class="team-grid">
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">RM</span>
+                            <div class="member-info">
+                                <div class="member-name">Ronit Mexson</div>
+                                <div class="member-reg">24BAI0036</div>
                             </div>
-                        </div>
-                        <div class="credit-col">
-                            <div class="credit-label">Faculty Supervision</div>
-                            <div class="credit-supervisor">
-                                <div class="supervisor-name">Prof. Hariharan R L</div>
-                                <div class="supervisor-dept">Center for AI Research</div>
+                        </article>
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">MP</span>
+                            <div class="member-info">
+                                <div class="member-name">Mit Kumar Raju Panchal</div>
+                                <div class="member-reg">24BAI0279</div>
                             </div>
-                            <div class="credit-label" style="margin-top: 12px;">Deliverables &amp; Deployment</div>
-                            <div style="font-size: 11px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                                <div><strong>Repo:</strong> <a href="https://github.com/ronitmexson2924/C--" target="_blank" style="color: var(--accent); text-decoration: underline;">github.com/ronitmexson2924/C--</a></div>
-                                <div><strong>Live:</strong> <a href="https://web-production-c8ddc.up.railway.app" target="_blank" style="color: var(--accent); text-decoration: underline;">web-production-c8ddc.up.railway.app</a></div>
+                        </article>
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">GG</span>
+                            <div class="member-info">
+                                <div class="member-name">Garv Gupta</div>
+                                <div class="member-reg">24BDS0169</div>
                             </div>
-                        </div>
+                        </article>
+                        <article class="member-card member-card-advisor">
+                            <span class="member-avatar" aria-hidden="true">HR</span>
+                            <div class="member-info">
+                                <div class="member-name">Prof. Hariharan R L</div>
+                                <div class="member-reg">Faculty advisor &middot; Center for AI Research</div>
+                            </div>
+                        </article>
                     </div>
-                </div>
+
+                    <div class="link-row">
+                        <a class="link-card" href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener">
+                            <span class="link-card-label">Repository</span>
+                            <span class="link-card-value">github.com/ronitmexson2924/C--</span>
+                            <span class="link-card-arrow" aria-hidden="true">&nearr;</span>
+                        </a>
+                        <a class="link-card" href="https://web-production-c8ddc.up.railway.app" target="_blank" rel="noopener">
+                            <span class="link-card-label">Live deployment</span>
+                            <span class="link-card-value">web-production-c8ddc.up.railway.app</span>
+                            <span class="link-card-arrow" aria-hidden="true">&nearr;</span>
+                        </a>
+                        <a class="link-card" href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener">
+                            <span class="link-card-label">Formal report</span>
+                            <span class="link-card-value">Language specification (PDF)</span>
+                            <span class="link-card-arrow" aria-hidden="true">&nearr;</span>
+                        </a>
+                    </div>
+                </section>
             </div>
         </section>
 
-        <!-- ================================================================
-             VIEW 3: KEY FEATURES / ARCHITECTURE
-             ================================================================ -->
-        <section class="tab-view" id="view-features">
+        <!-- ==============================================================
+             VIEW 3: ARCHITECTURE
+             ============================================================== -->
+        <section class="tab-view" id="view-features" role="tabpanel" aria-labelledby="tab-btn-features">
             <div class="content-wrapper">
                 <div class="doc-header">
-                    <div class="doc-eyebrow">CORE GUARANTEES</div>
-                    <h1 class="doc-title">Language Architecture</h1>
+                    <div class="doc-eyebrow">Core guarantees</div>
+                    <h1 class="doc-title">Language architecture</h1>
                     <p class="doc-lead">
-                        Six foundational invariants enforced across the lexical, syntactic, semantic, and code generation phases.
+                        Six invariants enforced across the lexical, syntactic, semantic, and code generation phases. Each card links to a runnable example.
                     </p>
                 </div>
 
@@ -367,169 +420,170 @@
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">01</span>
-                            <span class="feature-tag">CWE-119 / CWE-416 / CWE-476</span>
+                            <span class="feature-tag">CWE-119 &middot; CWE-416 &middot; CWE-476</span>
                         </div>
-                        <h3 class="feature-title">Spatial &amp; Temporal Memory Safety</h3>
+                        <h3 class="feature-title">Spatial &amp; temporal memory safety</h3>
                         <p class="feature-text">
-                            Buffer overflows, null pointer dereferences, and use-after-free faults are structurally unrepresentable. Memory allocation and reclamation for dynamic structures are managed transparently by the runtime and emitted C99 helpers.
+                            Buffer overflows, null dereferences, and use-after-free are structurally unrepresentable. Allocation and reclamation for dynamic structures are managed by the runtime and emitted C99 helpers.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="collections">Try it &rarr;</button>
                     </article>
 
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">02</span>
-                            <span class="feature-tag">ALIAS FREEDOM</span>
+                            <span class="feature-tag">Alias freedom</span>
                         </div>
-                        <h3 class="feature-title">Deep-Copy Value Semantics</h3>
+                        <h3 class="feature-title">Deep-copy value semantics</h3>
                         <p class="feature-text">
-                            Composite containers behave identically to primitive scalars. Binding a collection to a new identifier or passing it to a function performs a deep structural clone, preventing unintended mutation across call frames.
+                            Containers behave like scalars. Binding a collection to a new name or passing it to a function performs a deep clone, preventing unintended mutation across call frames.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="value_semantics">Try it &rarr;</button>
                     </article>
 
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">03</span>
-                            <span class="feature-tag">BINDING DISCIPLINE</span>
+                            <span class="feature-tag">Binding discipline</span>
                         </div>
-                        <h3 class="feature-title">Immutability by Default</h3>
+                        <h3 class="feature-title">Immutability by default</h3>
                         <p class="feature-text">
-                            Declarations introduced with <code>let</code> are immutable throughout their lexical scope. Reassignment is permitted only on bindings explicitly marked with <code>mut</code>, and uninitialized declarations are rejected at parse time.
+                            <code>let</code> bindings are immutable for their whole lexical scope. Reassignment is permitted only on bindings marked <code>mut</code>, and uninitialized declarations are rejected at parse time.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="bindings">Try it &rarr;</button>
                     </article>
 
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">04</span>
-                            <span class="feature-tag">ERROR RECOVERY</span>
+                            <span class="feature-tag">Error recovery</span>
                         </div>
-                        <h3 class="feature-title">Precision Diagnostics Engine</h3>
+                        <h3 class="feature-title">Precision diagnostics</h3>
                         <p class="feature-text">
-                            60 structured diagnostic codes render source context gutters, column-accurate carets, root-cause explanations, remediation hints, and Levenshtein edit-distance identifier suggestions.
+                            60 structured diagnostic codes render source context, column-accurate carets, root-cause explanations, remediation hints, and edit-distance identifier suggestions.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="error_diagnostic">Try it &rarr;</button>
                     </article>
 
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">05</span>
-                            <span class="feature-tag">EXECUTION TARGETS</span>
+                            <span class="feature-tag">Execution targets</span>
                         </div>
-                        <h3 class="feature-title">Dual-Backend Compilation</h3>
+                        <h3 class="feature-title">Dual-backend compilation</h3>
                         <p class="feature-text">
-                            Execute directly inside the deterministic tree-walking reference interpreter (with configurable step and call-depth guards) or transpile into self-contained, bounds-checked ISO C99 source code.
+                            Execute in the deterministic tree-walking reference interpreter (with step and call-depth guards), or transpile into self-contained, bounds-checked ISO C99.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="transpile_demo">Try it &rarr;</button>
                     </article>
 
                     <article class="feature-card">
                         <div class="feature-meta">
                             <span class="feature-num">06</span>
-                            <span class="feature-tag">FIRST-CLASS CONTAINERS</span>
+                            <span class="feature-tag">First-class containers</span>
                         </div>
-                        <h3 class="feature-title">Intrinsic Abstract Data Types</h3>
+                        <h3 class="feature-title">Intrinsic abstract data types</h3>
                         <p class="feature-text">
-                            Fixed-length arrays (<code>array&lt;T&gt;</code>), resizable vectors (<code>list&lt;T&gt;</code>), LIFO stacks (<code>stack&lt;T&gt;</code>), and FIFO queues (<code>queue&lt;T&gt;</code>) are first-class generic types checked by the semantic analyzer.
+                            Fixed-length <code>array&lt;T&gt;</code>, resizable <code>list&lt;T&gt;</code>, LIFO <code>stack&lt;T&gt;</code>, and FIFO <code>queue&lt;T&gt;</code> are generic types checked by the semantic analyzer.
                         </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="stack_queue">Try it &rarr;</button>
                     </article>
                 </div>
             </div>
         </section>
 
-        <!-- ================================================================
-             VIEW 4: COMPILER PIPELINE
-             ================================================================ -->
-        <section class="tab-view" id="view-pipeline">
+        <!-- ==============================================================
+             VIEW 4: PIPELINE
+             ============================================================== -->
+        <section class="tab-view" id="view-pipeline" role="tabpanel" aria-labelledby="tab-btn-pipeline">
             <div class="content-wrapper">
                 <div class="doc-header">
-                    <div class="doc-eyebrow">INTERNAL ARCHITECTURE</div>
-                    <h1 class="doc-title">Compilation &amp; Execution Pipeline</h1>
+                    <div class="doc-eyebrow">Internal architecture</div>
+                    <h1 class="doc-title">Compilation &amp; execution pipeline</h1>
                     <p class="doc-lead">
-                        A four-stage front-to-back architecture translating UTF-8 source text into verified AST nodes, direct evaluation, or portable ISO C99.
+                        Four stages translate UTF-8 source into verified AST nodes, direct evaluation, or portable ISO C99.
+                        Each stage can be inspected against the code currently in the playground.
                     </p>
                 </div>
 
-                <div class="pipeline-visual-container">
-                    <div class="pipeline-step-card">
+                <ol class="pipeline-visual-container">
+                    <li class="pipeline-step-card">
                         <div class="step-header">
-                            <span class="step-badge">STAGE 01</span>
+                            <span class="step-badge">Stage 01</span>
                             <code class="step-module">cmm/lexer.py</code>
                         </div>
-                        <h3 class="step-title">Lexical Scanner</h3>
+                        <h3 class="step-title">Lexical scanner</h3>
                         <p class="step-desc">
-                            Normalizes UTF-8 input and scans source characters into a deterministic stream of typed tokens with exact 1-indexed line and column spans.
+                            Normalizes UTF-8 input and scans it into a deterministic stream of typed tokens with exact 1-indexed line and column spans.
                         </p>
-                        <div class="step-meta">Output &rarr; <code>List[Token]</code></div>
-                    </div>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>List[Token]</code></span>
+                            <button class="step-action" data-pipeline-action="btn-tokens">Inspect</button>
+                        </div>
+                    </li>
 
-                    <div class="pipeline-connector" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-
-                    <div class="pipeline-step-card">
+                    <li class="pipeline-step-card">
                         <div class="step-header">
-                            <span class="step-badge">STAGE 02</span>
+                            <span class="step-badge">Stage 02</span>
                             <code class="step-module">cmm/parser.py</code>
                         </div>
-                        <h3 class="step-title">Recursive Descent Parser</h3>
+                        <h3 class="step-title">Recursive descent parser</h3>
                         <p class="step-desc">
                             Builds an Abstract Syntax Tree using LL(k) statement parsing combined with 10-tier Pratt precedence climbing for expressions.
                         </p>
-                        <div class="step-meta">Output &rarr; <code>Program(AST)</code></div>
-                    </div>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>Program(AST)</code></span>
+                            <button class="step-action" data-pipeline-action="btn-ast">Inspect</button>
+                        </div>
+                    </li>
 
-                    <div class="pipeline-connector" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-
-                    <div class="pipeline-step-card">
+                    <li class="pipeline-step-card">
                         <div class="step-header">
-                            <span class="step-badge">STAGE 03</span>
+                            <span class="step-badge">Stage 03</span>
                             <code class="step-module">cmm/analyzer.py</code>
                         </div>
-                        <h3 class="step-title">Semantic Analyzer</h3>
+                        <h3 class="step-title">Semantic analyzer</h3>
                         <p class="step-desc">
-                            Resolves lexical scopes, checks type compatibility, enforces <code>let</code>/<code>mut</code> rules, and verifies control-flow return completeness.
+                            Resolves lexical scopes, checks type compatibility, enforces <code>let</code>/<code>mut</code> rules, and verifies return completeness.
                         </p>
-                        <div class="step-meta">Output &rarr; <code>Verified AST</code></div>
-                    </div>
-
-                    <div class="pipeline-connector" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </div>
-
-                    <div class="pipeline-step-card dual-target-card">
-                        <div class="step-header">
-                            <span class="step-badge">STAGE 04</span>
-                            <code class="step-module">interpreter / codegen_c</code>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>Verified AST</code></span>
+                            <button class="step-action" data-pipeline-action="btn-check">Inspect</button>
                         </div>
-                        <h3 class="step-title">Dual Execution Backends</h3>
+                    </li>
+
+                    <li class="pipeline-step-card dual-target-card">
+                        <div class="step-header">
+                            <span class="step-badge">Stage 04</span>
+                            <code class="step-module" title="cmm/interpreter.py &middot; cmm/codegen_c.py">interpreter &middot; codegen</code>
+                        </div>
+                        <h3 class="step-title">Dual execution backends</h3>
                         <p class="step-desc">
-                            <strong>Target A:</strong> Tree-walking reference evaluator.<br>
-                            <strong>Target B:</strong> Hardened ISO C99 code generator.
+                            <strong>Target A</strong> &mdash; tree-walking reference evaluator.<br>
+                            <strong>Target B</strong> &mdash; hardened ISO C99 code generator.
                         </p>
-                        <div class="step-meta">Output &rarr; <code>Stdout / C99</code></div>
-                    </div>
-                </div>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>stdout &middot; C99</code></span>
+                            <span class="step-actions">
+                                <button class="step-action" data-pipeline-action="btn-run">Run</button>
+                                <button class="step-action" data-pipeline-action="btn-transpile">C99</button>
+                            </span>
+                        </div>
+                    </li>
+                </ol>
 
                 <div class="pipeline-explanation-box">
                     <div class="box-grid">
                         <div>
-                            <h3 class="box-title">Normative Reference Interpreter</h3>
+                            <h3 class="box-title">Normative reference interpreter</h3>
                             <p>
-                                Implemented in <code>cmm/interpreter.py</code>, the reference evaluator directly executes verified AST nodes with deterministic activation records, deep-copy value semantics, checked arithmetic, and a 100,000-step execution watchdog to prevent runaway loops in interactive sessions.
+                                <code>cmm/interpreter.py</code> executes verified AST nodes with deterministic activation records, deep-copy value semantics, checked arithmetic, and a 100,000-step watchdog that stops runaway loops in interactive sessions.
                             </p>
                         </div>
                         <div>
-                            <h3 class="box-title">ISO C99 Source-to-Source Transpiler</h3>
+                            <h3 class="box-title">ISO C99 source-to-source transpiler</h3>
                             <p>
-                                Implemented in <code>cmm/codegen_c.py</code>, the transpiler lowers C-- constructs into portable C99 suitable for <code>gcc -std=c99 -O2</code> or <code>clang</code>, automatically injecting runtime bounds assertions, division-by-zero traps, and deep-copy helpers.
+                                <code>cmm/codegen_c.py</code> lowers C-- into portable C99 for <code>gcc -std=c99 -O2</code> or <code>clang</code>, injecting runtime bounds assertions, division-by-zero traps, and deep-copy helpers.
                             </p>
                         </div>
                     </div>
@@ -537,151 +591,188 @@
             </div>
         </section>
 
-        <!-- ================================================================
-             VIEW 5: SYNTAX CHEATSHEET / REFERENCE
-             ================================================================ -->
-        <section class="tab-view" id="view-syntax">
+        <!-- ==============================================================
+             VIEW 5: REFERENCE
+             ============================================================== -->
+        <section class="tab-view" id="view-syntax" role="tabpanel" aria-labelledby="tab-btn-syntax">
             <div class="content-wrapper">
                 <div class="doc-header">
-                    <div class="doc-eyebrow">GRAMMAR &amp; IDIOMS</div>
-                    <h1 class="doc-title">Language Reference</h1>
+                    <div class="doc-eyebrow">Grammar &amp; idioms</div>
+                    <h1 class="doc-title">Language reference</h1>
                     <p class="doc-lead">
-                        Canonical syntax patterns for bindings, functions, native containers, and structured control flow. Click any snippet's action button to load it into the editor.
+                        Canonical patterns for bindings, functions, containers, and structured control flow. Open any card in the playground to run it.
                     </p>
+                    <div class="reference-filter">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                        <input type="search" id="reference-search" placeholder="Filter reference (e.g. queue, switch, fn)" aria-label="Filter reference cards" autocomplete="off">
+                    </div>
                 </div>
 
-                <div class="syntax-grid">
+                <div class="syntax-grid" id="syntax-grid">
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">01. Bindings &amp; Scalar Types</h3>
-                            <button class="btn-load-snippet" data-snippet="bindings" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">01. Bindings &amp; scalar types</h3>
+                            <button class="btn-load-snippet" data-snippet="bindings" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
-                        <pre class="syntax-code"><code><span class="token-kw">let</span> immut = 42;         <span class="token-comment">// Immutable by default</span>
-<span class="token-kw">mut</span> counter = 0;        <span class="token-comment">// Mutable binding</span>
-counter = counter + 1;  <span class="token-comment">// Permitted reassignment</span>
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> immut = <span class="token-num">42</span>;         <span class="token-comment">// Immutable by default</span>
+<span class="token-kw">mut</span> counter = <span class="token-num">0</span>;        <span class="token-comment">// Mutable binding</span>
+counter = counter + <span class="token-num">1</span>;  <span class="token-comment">// Permitted reassignment</span>
 
 <span class="token-comment">// Inferred scalar types: int, float, bool, string</span>
-<span class="token-kw">let</span> pi = 3.14159;
+<span class="token-kw">let</span> pi = <span class="token-num">3.14159</span>;
 <span class="token-kw">let</span> active = <span class="token-kw">true</span>;
 <span class="token-kw">let</span> name = <span class="token-str">"C--"</span>;</code></pre>
                     </div>
 
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">02. Functions &amp; Procedures</h3>
-                            <button class="btn-load-snippet" data-snippet="functions" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">02. Functions &amp; procedures</h3>
+                            <button class="btn-load-snippet" data-snippet="functions" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
                         <pre class="syntax-code"><code><span class="token-comment">// Typed function with explicit return type</span>
-<span class="token-kw">fn</span> add(a: <span class="token-type">int</span>, b: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
+<span class="token-kw">fn</span> <span class="token-fn">add</span>(a: <span class="token-type">int</span>, b: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
     <span class="token-kw">return</span> a + b;
 }
 
 <span class="token-comment">// Void procedure (omits return type arrow)</span>
-<span class="token-kw">fn</span> greet(user: <span class="token-type">string</span>) {
-    print(<span class="token-str">"Hello,"</span>);
-    print(user);
+<span class="token-kw">fn</span> <span class="token-fn">greet</span>(user: <span class="token-type">string</span>) {
+    <span class="token-kw">print</span>(<span class="token-str">"Hello,"</span>);
+    <span class="token-kw">print</span>(user);
     <span class="token-kw">return</span>;
 }</code></pre>
                     </div>
 
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">03. Arrays &amp; Dynamic Lists</h3>
-                            <button class="btn-load-snippet" data-snippet="collections" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">03. Arrays &amp; dynamic lists</h3>
+                            <button class="btn-load-snippet" data-snippet="collections" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
                         <pre class="syntax-code"><code><span class="token-comment">// Fixed-capacity array (bounds checked)</span>
-<span class="token-kw">mut</span> arr = [10, 20, 30];
-arr[0] = 99;
-print(arr.len());
+<span class="token-kw">mut</span> arr = [<span class="token-num">10</span>, <span class="token-num">20</span>, <span class="token-num">30</span>];
+arr[<span class="token-num">0</span>] = <span class="token-num">99</span>;
+<span class="token-kw">print</span>(arr.<span class="token-fn">len</span>());
 
 <span class="token-comment">// Dynamic list</span>
 <span class="token-kw">mut</span> items = <span class="token-type">list</span>&lt;<span class="token-type">string</span>&gt;();
-items.push(<span class="token-str">"alpha"</span>);
-items.push(<span class="token-str">"beta"</span>);
-items.insert(1, <span class="token-str">"inserted"</span>);
-print(items.pop());</code></pre>
+items.<span class="token-fn">push</span>(<span class="token-str">"alpha"</span>);
+items.<span class="token-fn">push</span>(<span class="token-str">"beta"</span>);
+items.<span class="token-fn">insert</span>(<span class="token-num">1</span>, <span class="token-str">"inserted"</span>);
+<span class="token-kw">print</span>(items.<span class="token-fn">pop</span>());</code></pre>
                     </div>
 
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">04. LIFO Stacks &amp; FIFO Queues</h3>
-                            <button class="btn-load-snippet" data-snippet="stack_queue" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">04. LIFO stacks &amp; FIFO queues</h3>
+                            <button class="btn-load-snippet" data-snippet="stack_queue" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
                         <pre class="syntax-code"><code><span class="token-comment">// LIFO Stack</span>
 <span class="token-kw">mut</span> st = <span class="token-type">stack</span>&lt;<span class="token-type">int</span>&gt;();
-st.push(10);
-st.push(20);
-print(st.peek()); <span class="token-comment">// 20</span>
-print(st.pop());  <span class="token-comment">// 20</span>
+st.<span class="token-fn">push</span>(<span class="token-num">10</span>);
+st.<span class="token-fn">push</span>(<span class="token-num">20</span>);
+<span class="token-kw">print</span>(st.<span class="token-fn">peek</span>()); <span class="token-comment">// 20</span>
+<span class="token-kw">print</span>(st.<span class="token-fn">pop</span>());  <span class="token-comment">// 20</span>
 
 <span class="token-comment">// FIFO Queue</span>
 <span class="token-kw">mut</span> q = <span class="token-type">queue</span>&lt;<span class="token-type">int</span>&gt;();
-q.enqueue(1);
-print(q.dequeue()); <span class="token-comment">// 1</span></code></pre>
+q.<span class="token-fn">enqueue</span>(<span class="token-num">1</span>);
+<span class="token-kw">print</span>(q.<span class="token-fn">dequeue</span>()); <span class="token-comment">// 1</span></code></pre>
                     </div>
 
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">05. Switch-Case Dispatch</h3>
-                            <button class="btn-load-snippet" data-snippet="switch_matching" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">05. Switch-case dispatch</h3>
+                            <button class="btn-load-snippet" data-snippet="switch_matching" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
-                        <pre class="syntax-code"><code><span class="token-kw">let</span> day = 3;
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> day = <span class="token-num">3</span>;
 <span class="token-kw">switch</span> (day) {
-    <span class="token-kw">case</span> 1: { print(<span class="token-str">"Monday"</span>); }
-    <span class="token-kw">case</span> 2: { print(<span class="token-str">"Tuesday"</span>); }
-    <span class="token-kw">case</span> 3: { print(<span class="token-str">"Wednesday"</span>); }
-    <span class="token-kw">default</span>: { print(<span class="token-str">"Weekend"</span>); }
+    <span class="token-kw">case</span> <span class="token-num">1</span>: { <span class="token-kw">print</span>(<span class="token-str">"Monday"</span>); }
+    <span class="token-kw">case</span> <span class="token-num">2</span>: { <span class="token-kw">print</span>(<span class="token-str">"Tuesday"</span>); }
+    <span class="token-kw">case</span> <span class="token-num">3</span>: { <span class="token-kw">print</span>(<span class="token-str">"Wednesday"</span>); }
+    <span class="token-kw">default</span>: { <span class="token-kw">print</span>(<span class="token-str">"Weekend"</span>); }
 }
 
 <span class="token-comment">// String literal matching (no break needed)</span>
 <span class="token-kw">switch</span> (cmd) {
-    <span class="token-kw">case</span> <span class="token-str">"run"</span>: { execute(); }
+    <span class="token-kw">case</span> <span class="token-str">"run"</span>: { <span class="token-fn">execute</span>(); }
     <span class="token-kw">default</span>: {}
 }</code></pre>
                     </div>
 
                     <div class="syntax-card">
                         <div class="syntax-card-header">
-                            <h3 class="syntax-title">06. Structured Iteration &amp; Branching</h3>
-                            <button class="btn-load-snippet" data-snippet="loops" title="Load example in Playground">Open in Playground &rarr;</button>
+                            <h3 class="syntax-title">06. Iteration &amp; branching</h3>
+                            <button class="btn-load-snippet" data-snippet="loops" title="Load example in Playground">Open in playground &rarr;</button>
                         </div>
                         <pre class="syntax-code"><code><span class="token-comment">// Conditional branching</span>
-<span class="token-kw">if</span> (score &gt;= 90) { print(<span class="token-str">"A"</span>); }
-<span class="token-kw">else</span> <span class="token-kw">if</span> (score &gt;= 80) { print(<span class="token-str">"B"</span>); }
-<span class="token-kw">else</span> { print(<span class="token-str">"C"</span>); }
+<span class="token-kw">if</span> (score &gt;= <span class="token-num">90</span>) { <span class="token-kw">print</span>(<span class="token-str">"A"</span>); }
+<span class="token-kw">else</span> <span class="token-kw">if</span> (score &gt;= <span class="token-num">80</span>) { <span class="token-kw">print</span>(<span class="token-str">"B"</span>); }
+<span class="token-kw">else</span> { <span class="token-kw">print</span>(<span class="token-str">"C"</span>); }
 
 <span class="token-comment">// Scoped C-style for loop</span>
-<span class="token-kw">for</span> (<span class="token-kw">mut</span> i = 0; i &lt; 5; i = i + 1) {
-    print(i);
+<span class="token-kw">for</span> (<span class="token-kw">mut</span> i = <span class="token-num">0</span>; i &lt; <span class="token-num">5</span>; i = i + <span class="token-num">1</span>) {
+    <span class="token-kw">print</span>(i);
 }
 
-<span class="token-comment">// While &amp; Do-While loops</span>
-<span class="token-kw">while</span> (n &gt; 0) { n = n - 1; }
-<span class="token-kw">do</span> { n = n + 1; } <span class="token-kw">while</span> (n &lt; 10);</code></pre>
+<span class="token-comment">// While &amp; do-while loops</span>
+<span class="token-kw">while</span> (n &gt; <span class="token-num">0</span>) { n = n - <span class="token-num">1</span>; }
+<span class="token-kw">do</span> { n = n + <span class="token-num">1</span>; } <span class="token-kw">while</span> (n &lt; <span class="token-num">10</span>);</code></pre>
                     </div>
+                </div>
+                <div class="empty-state reference-empty" id="reference-empty" hidden>
+                    <div class="empty-title">No matching reference cards</div>
+                    <div class="empty-sub">Try a keyword such as <code>let</code>, <code>list</code>, or <code>while</code>.</div>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- Status / Metadata Footer -->
     <footer class="app-footer">
         <div class="footer-content">
             <div class="footer-left">
                 <span class="footer-item-strong">C-- Compiler Project</span>
-                <span class="footer-sep">&middot;</span>
+                <span class="footer-sep" aria-hidden="true">&middot;</span>
                 <span>SCOPE &middot; Center for AI Research</span>
             </div>
             <div class="footer-right">
-                <span>R. Mexson, M. K. R. Panchal, G. Gupta</span>
-                <span class="footer-sep">&middot;</span>
-                <span>Advisor: Prof. Hariharan R L</span>
+                <span>R. Mexson &middot; M. K. R. Panchal &middot; G. Gupta</span>
+                <span class="footer-sep" aria-hidden="true">&middot;</span>
+                <button class="footer-link" id="btn-shortcuts" title="Keyboard shortcuts">Shortcuts <kbd class="kbd">?</kbd></button>
             </div>
         </div>
     </footer>
 
-    <!-- Application Controller -->
+    <!-- ==================================================================
+         OVERLAYS
+         ================================================================== -->
+    <div class="modal-backdrop" id="command-palette" hidden>
+        <div class="modal cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+            <div class="cmdk-input-row">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input type="text" id="cmdk-input" class="cmdk-input" placeholder="Type a command or search examples..." autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list">
+                <kbd class="kbd">Esc</kbd>
+            </div>
+            <ul class="cmdk-list" id="cmdk-list" role="listbox"></ul>
+            <div class="cmdk-footer">
+                <span><kbd class="kbd">&uarr;</kbd><kbd class="kbd">&darr;</kbd> navigate</span>
+                <span><kbd class="kbd">&crarr;</kbd> select</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="shortcuts-modal" hidden>
+        <div class="modal shortcuts" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+            <div class="modal-header">
+                <h2 class="modal-title" id="shortcuts-title">Keyboard shortcuts</h2>
+                <button class="icon-btn modal-close" data-close-modal aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <dl class="shortcut-list" id="shortcut-list"></dl>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+
     <script src="app.js"></script>
 </body>
 </html>
