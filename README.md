@@ -77,8 +77,21 @@ python3 web/server.py
 ```
 Open **`http://localhost:8000`** in any web browser.
 
+Optional environment variables for deployments:
+
+| Variable | Purpose |
+|:---|:---|
+| `PORT` | Port to listen on (Railway/Render set this automatically). |
+| `SITE_URL` | Public origin used in canonical URLs, Open Graph tags, JSON-LD, and the sitemap (default: `https://web-production-c8ddc.up.railway.app`). |
+| `GOOGLE_SITE_VERIFICATION` | Google Search Console verification token, emitted as a `<meta>` tag. |
+| `GOOGLE_SITE_VERIFICATION_FILE` | Alternative: the `googleXXXX.html` file name to serve for HTML-file verification. |
+| `BING_SITE_VERIFICATION` | Bing Webmaster Tools verification token. |
+
+See [`SEO_CHECKLIST.md`](SEO_CHECKLIST.md) for search-engine setup.
+
 ### Key Capabilities of the Web Studio
-- **Top Navigation Bar:** Deep-linkable sections (`#playground`, `#overview`, `#features`, `#pipeline`, `#syntax`) for the **Playground**, **Overview**, **Architecture**, **Pipeline**, and **Reference** views, with browser back/forward support.
+- **Server-Rendered Pages:** `/` (overview), `/playground`, `/architecture`, `/pipeline`, `/reference`, and `/about` each have their own URL, metadata, and structured data, and work without JavaScript. In the browser they switch instantly via the History API, with back/forward support. Old `/#section` links redirect automatically.
+- **Search-Ready:** `robots.txt`, `sitemap.xml`, canonical URLs, Open Graph/Twitter cards, schema.org JSON-LD, a web app manifest, gzip, cache headers, and a strict Content-Security-Policy.
 - **Split-Screen Studio:** Syntax-highlighted editor with active-line tracking, auto-indent, bracket/quote pairing, block indent/outdent, and line-comment toggling; resizable output pane (drag or arrow keys) that remembers its width.
 - **Live Diagnostics:** Static checks run as you type (via the side-effect-free `/api/check` endpoint). Errors are marked in the gutter, listed in a **Problems** panel, and every `file:line:col` location is clickable to jump to the source.
 - **Compiler Inspectors:** Console, **C99** (highlighted), **AST**, and **Tokens** views. A stage trace shows which phase (Lex → Parse → Analyze → Execute) passed or failed, and clicking a token locates it in the editor.

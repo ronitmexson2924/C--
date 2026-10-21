@@ -1,0 +1,103 @@
+        <section class="tab-view" id="view-features" aria-labelledby="architecture-title">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">Core guarantees</div>
+                    <h1 class="doc-title" id="architecture-title">C-- language architecture and safety guarantees</h1>
+                    <p class="doc-lead">
+                        Six invariants that the C-- compiler enforces across the lexical, syntactic, semantic, and code generation phases.
+                        Together they make C-- programs memory safe without a garbage collector or a borrow checker. Each card links to a runnable example.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">01</span>
+                            <span class="feature-tag">CWE-119 &middot; CWE-416 &middot; CWE-476</span>
+                        </div>
+                        <h2 class="feature-title">Spatial &amp; temporal memory safety</h2>
+                        <p class="feature-text">
+                            Buffer overflows, null dereferences, and use-after-free are structurally unrepresentable. Allocation and reclamation for dynamic structures are managed by the runtime and emitted C99 helpers.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="collections">Try it &rarr;</button>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">02</span>
+                            <span class="feature-tag">Alias freedom</span>
+                        </div>
+                        <h2 class="feature-title">Deep-copy value semantics</h2>
+                        <p class="feature-text">
+                            Containers behave like scalars. Binding a collection to a new name or passing it to a function performs a deep clone, preventing unintended mutation across call frames.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="value_semantics">Try it &rarr;</button>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">03</span>
+                            <span class="feature-tag">Binding discipline</span>
+                        </div>
+                        <h2 class="feature-title">Immutability by default</h2>
+                        <p class="feature-text">
+                            <code>let</code> bindings are immutable for their whole lexical scope. Reassignment is permitted only on bindings marked <code>mut</code>, and uninitialized declarations are rejected at parse time.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="bindings">Try it &rarr;</button>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">04</span>
+                            <span class="feature-tag">Error recovery</span>
+                        </div>
+                        <h2 class="feature-title">Precision diagnostics</h2>
+                        <p class="feature-text">
+                            60 structured diagnostic codes render source context, column-accurate carets, root-cause explanations, remediation hints, and edit-distance identifier suggestions.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="error_diagnostic">Try it &rarr;</button>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">05</span>
+                            <span class="feature-tag">Execution targets</span>
+                        </div>
+                        <h2 class="feature-title">Dual-backend compilation</h2>
+                        <p class="feature-text">
+                            Execute in the deterministic tree-walking reference interpreter (with step and call-depth guards), or transpile into self-contained, bounds-checked ISO C99.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="transpile_demo">Try it &rarr;</button>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-meta">
+                            <span class="feature-num">06</span>
+                            <span class="feature-tag">First-class containers</span>
+                        </div>
+                        <h2 class="feature-title">Intrinsic abstract data types</h2>
+                        <p class="feature-text">
+                            Fixed-length <code>array&lt;T&gt;</code>, resizable <code>list&lt;T&gt;</code>, LIFO <code>stack&lt;T&gt;</code>, and FIFO <code>queue&lt;T&gt;</code> are generic types checked by the semantic analyzer.
+                        </p>
+                        <button class="feature-link btn-load-snippet" data-snippet="stack_queue">Try it &rarr;</button>
+                    </article>
+                </div>
+                <nav class="next-links" aria-label="Explore">
+                    <a class="link-card" href="/pipeline">
+                        <span class="link-card-label">Next</span>
+                        <span class="link-card-value">How the compiler pipeline works</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/reference">
+                        <span class="link-card-label">Reference</span>
+                        <span class="link-card-value">Syntax for every construct</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/playground">
+                        <span class="link-card-label">Try it</span>
+                        <span class="link-card-value">Run the examples online</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                </nav>
+            </div>
+        </section>

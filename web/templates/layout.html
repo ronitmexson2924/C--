@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{@HEAD}}
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/cmm-icon-32.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <!-- Resolve theme before first paint to avoid a flash of the wrong palette -->
+    <script>
+        (function () {
+            var theme = "dark";
+            try {
+                var saved = localStorage.getItem("cmm-theme");
+                if (saved === "light" || saved === "dark") theme = saved;
+                else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+            } catch (e) {}
+            document.documentElement.setAttribute("data-theme", theme);
+            document.documentElement.classList.add("js");
+        })();
+    </script>
+
+    <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{@ASSET:style.css}}">
+    <script src="{{@ASSET:app.js}}" defer></script>
+{{@JSONLD}}
+</head>
+<body>
+    <a class="skip-link" href="#main-container">Skip to content</a>
+
+    <!-- ==================================================================
+         TOP NAVIGATION
+         ================================================================== -->
+    <header class="app-header" id="main-header">
+        <div class="header-left">
+            <a class="brand" href="/" aria-label="C-- home">
+                <img src="/assets/cmm-icon-64.png" alt="" class="brand-logo" width="22" height="22">
+                <span class="brand-title">C<span class="brand-minus">--</span></span>
+                <span class="brand-version">v0.2.0</span>
+            </a>
+        </div>
+
+        <nav class="nav-tabs" id="nav-tabs" aria-label="Primary navigation">
+            <a class="nav-tab" href="/" data-tab="overview" id="tab-btn-overview">Overview</a>
+            <a class="nav-tab" href="/playground" data-tab="playground" id="tab-btn-playground">Playground</a>
+            <a class="nav-tab" href="/architecture" data-tab="features" id="tab-btn-features">Architecture</a>
+            <a class="nav-tab" href="/pipeline" data-tab="pipeline" id="tab-btn-pipeline">Pipeline</a>
+            <a class="nav-tab" href="/reference" data-tab="syntax" id="tab-btn-syntax">Reference</a>
+            <a class="nav-tab" href="/about" data-tab="about" id="tab-btn-about">About</a>
+            <span class="nav-indicator" id="nav-indicator" aria-hidden="true"></span>
+        </nav>
+
+        <div class="header-right">
+            <button class="cmdk-trigger js-only" id="btn-command-palette" title="Command palette" aria-label="Open command palette">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <span class="cmdk-label">Search commands</span>
+                <kbd class="kbd" data-mod-key>Ctrl K</kbd>
+            </button>
+
+            <div class="connection-status js-only" id="connection-status" title="Compiler backend status" role="status">
+                <span class="status-dot pending"></span>
+                <span class="status-label" id="status-label">Connecting</span>
+            </div>
+
+            <button class="icon-btn js-only" id="btn-theme-toggle" title="Toggle color theme" aria-label="Toggle color theme">
+                <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                </svg>
+                <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+
+            <a href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener" class="doc-link-btn" title="Open formal language specification (PDF)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <span>Spec</span>
+            </a>
+
+            <a href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener" class="doc-link-btn" title="View source on GitHub">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+                </svg>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="app-container" id="main-container" tabindex="-1">
+{{@SECTIONS}}
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <span class="footer-item-strong">C-- Compiler Project</span>
+                <span class="footer-sep" aria-hidden="true">&middot;</span>
+                <span>SCOPE &middot; Center for AI Research</span>
+            </div>
+            <div class="footer-right">
+                <span>R. Mexson &middot; M. K. R. Panchal &middot; G. Gupta</span>
+                <span class="footer-sep" aria-hidden="true">&middot;</span>
+                <button class="footer-link js-only" id="btn-shortcuts" title="Keyboard shortcuts">Shortcuts <kbd class="kbd">?</kbd></button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================================================================
+         OVERLAYS
+         ================================================================== -->
+    <div class="modal-backdrop" id="command-palette" hidden>
+        <div class="modal cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+            <div class="cmdk-input-row">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                <input type="text" id="cmdk-input" class="cmdk-input" placeholder="Type a command or search examples..." autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list">
+                <kbd class="kbd">Esc</kbd>
+            </div>
+            <ul class="cmdk-list" id="cmdk-list" role="listbox"></ul>
+            <div class="cmdk-footer">
+                <span><kbd class="kbd">&uarr;</kbd><kbd class="kbd">&darr;</kbd> navigate</span>
+                <span><kbd class="kbd">&crarr;</kbd> select</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="shortcuts-modal" hidden>
+        <div class="modal shortcuts" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+            <div class="modal-header">
+                <h2 class="modal-title" id="shortcuts-title">Keyboard shortcuts</h2>
+                <button class="icon-btn modal-close" data-close-modal aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <dl class="shortcut-list" id="shortcut-list"></dl>
+        </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+
+</body>
+</html>

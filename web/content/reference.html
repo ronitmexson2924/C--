@@ -1,0 +1,153 @@
+        <section class="tab-view" id="view-syntax" aria-labelledby="reference-title">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">Grammar &amp; idioms</div>
+                    <h1 class="doc-title" id="reference-title">C-- language reference and syntax guide</h1>
+                    <p class="doc-lead">
+                        Canonical patterns for bindings, functions, containers, and structured control flow. Open any card in the playground to run it.
+                    </p>
+                    <div class="reference-filter">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                        <input type="search" id="reference-search" placeholder="Filter reference (e.g. queue, switch, fn)" aria-label="Filter reference cards" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="syntax-grid" id="syntax-grid">
+                    <article class="syntax-card" id="bindings">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#bindings">01. Bindings &amp; scalar types</a></h2>
+                            <button class="btn-load-snippet" data-snippet="bindings" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro">C-- has four scalar types: 64-bit <code>int</code>, IEEE-754 <code>float</code>, <code>bool</code>, and UTF-8 <code>string</code>. Types are inferred from the initializer, every binding must be initialized, and only bindings declared with <code>mut</code> can be reassigned.</p>
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> immut = <span class="token-num">42</span>;         <span class="token-comment">// Immutable by default</span>
+<span class="token-kw">mut</span> counter = <span class="token-num">0</span>;        <span class="token-comment">// Mutable binding</span>
+counter = counter + <span class="token-num">1</span>;  <span class="token-comment">// Permitted reassignment</span>
+
+<span class="token-comment">// Inferred scalar types: int, float, bool, string</span>
+<span class="token-kw">let</span> pi = <span class="token-num">3.14159</span>;
+<span class="token-kw">let</span> active = <span class="token-kw">true</span>;
+<span class="token-kw">let</span> name = <span class="token-str">"C--"</span>;</code></pre>
+                    </article>
+
+                    <article class="syntax-card" id="functions">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#functions">02. Functions &amp; procedures</a></h2>
+                            <button class="btn-load-snippet" data-snippet="functions" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro">Functions declare typed parameters and an explicit return type after <code>-&gt;</code>. Procedures omit the arrow. The analyzer verifies that every path of a typed function returns a value of the right type.</p>
+                        <pre class="syntax-code"><code><span class="token-comment">// Typed function with explicit return type</span>
+<span class="token-kw">fn</span> <span class="token-fn">add</span>(a: <span class="token-type">int</span>, b: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
+    <span class="token-kw">return</span> a + b;
+}
+
+<span class="token-comment">// Void procedure (omits return type arrow)</span>
+<span class="token-kw">fn</span> <span class="token-fn">greet</span>(user: <span class="token-type">string</span>) {
+    <span class="token-kw">print</span>(<span class="token-str">"Hello,"</span>);
+    <span class="token-kw">print</span>(user);
+    <span class="token-kw">return</span>;
+}</code></pre>
+                    </article>
+
+                    <article class="syntax-card" id="arrays-lists">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#arrays-lists">03. Arrays &amp; dynamic lists</a></h2>
+                            <button class="btn-load-snippet" data-snippet="collections" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro">Arrays have a fixed length and lists grow dynamically. Every index is bounds-checked at runtime, and assigning or passing a collection copies it, so two names never share the same data.</p>
+                        <pre class="syntax-code"><code><span class="token-comment">// Fixed-capacity array (bounds checked)</span>
+<span class="token-kw">mut</span> arr = [<span class="token-num">10</span>, <span class="token-num">20</span>, <span class="token-num">30</span>];
+arr[<span class="token-num">0</span>] = <span class="token-num">99</span>;
+<span class="token-kw">print</span>(arr.<span class="token-fn">len</span>());
+
+<span class="token-comment">// Dynamic list</span>
+<span class="token-kw">mut</span> items = <span class="token-type">list</span>&lt;<span class="token-type">string</span>&gt;();
+items.<span class="token-fn">push</span>(<span class="token-str">"alpha"</span>);
+items.<span class="token-fn">push</span>(<span class="token-str">"beta"</span>);
+items.<span class="token-fn">insert</span>(<span class="token-num">1</span>, <span class="token-str">"inserted"</span>);
+<span class="token-kw">print</span>(items.<span class="token-fn">pop</span>());</code></pre>
+                    </article>
+
+                    <article class="syntax-card" id="stacks-queues">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#stacks-queues">04. LIFO stacks &amp; FIFO queues</a></h2>
+                            <button class="btn-load-snippet" data-snippet="stack_queue" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro">Stacks (last in, first out) and queues (first in, first out) are built-in generic types. Popping or dequeuing an empty container raises a clear runtime error instead of reading invalid memory.</p>
+                        <pre class="syntax-code"><code><span class="token-comment">// LIFO Stack</span>
+<span class="token-kw">mut</span> st = <span class="token-type">stack</span>&lt;<span class="token-type">int</span>&gt;();
+st.<span class="token-fn">push</span>(<span class="token-num">10</span>);
+st.<span class="token-fn">push</span>(<span class="token-num">20</span>);
+<span class="token-kw">print</span>(st.<span class="token-fn">peek</span>()); <span class="token-comment">// 20</span>
+<span class="token-kw">print</span>(st.<span class="token-fn">pop</span>());  <span class="token-comment">// 20</span>
+
+<span class="token-comment">// FIFO Queue</span>
+<span class="token-kw">mut</span> q = <span class="token-type">queue</span>&lt;<span class="token-type">int</span>&gt;();
+q.<span class="token-fn">enqueue</span>(<span class="token-num">1</span>);
+<span class="token-kw">print</span>(q.<span class="token-fn">dequeue</span>()); <span class="token-comment">// 1</span></code></pre>
+                    </article>
+
+                    <article class="syntax-card" id="switch">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#switch">05. Switch-case dispatch</a></h2>
+                            <button class="btn-load-snippet" data-snippet="switch_matching" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro"><code>switch</code> matches integers or strings. Each case has its own block, there is no fall-through, and the analyzer rejects duplicate cases and mismatched types.</p>
+                        <pre class="syntax-code"><code><span class="token-kw">let</span> day = <span class="token-num">3</span>;
+<span class="token-kw">switch</span> (day) {
+    <span class="token-kw">case</span> <span class="token-num">1</span>: { <span class="token-kw">print</span>(<span class="token-str">"Monday"</span>); }
+    <span class="token-kw">case</span> <span class="token-num">2</span>: { <span class="token-kw">print</span>(<span class="token-str">"Tuesday"</span>); }
+    <span class="token-kw">case</span> <span class="token-num">3</span>: { <span class="token-kw">print</span>(<span class="token-str">"Wednesday"</span>); }
+    <span class="token-kw">default</span>: { <span class="token-kw">print</span>(<span class="token-str">"Weekend"</span>); }
+}
+
+<span class="token-comment">// String literal matching (no break needed)</span>
+<span class="token-kw">switch</span> (cmd) {
+    <span class="token-kw">case</span> <span class="token-str">"run"</span>: { <span class="token-fn">execute</span>(); }
+    <span class="token-kw">default</span>: {}
+}</code></pre>
+                    </article>
+
+                    <article class="syntax-card" id="control-flow">
+                        <div class="syntax-card-header">
+                            <h2 class="syntax-title"><a class="anchor-link" href="#control-flow">06. Iteration &amp; branching</a></h2>
+                            <button class="btn-load-snippet" data-snippet="loops" title="Load example in Playground">Open in playground &rarr;</button>
+                        </div>
+                        <p class="syntax-intro">Conditions must be <code>bool</code> and braces are mandatory. C-- supports <code>if</code>/<code>else if</code>/<code>else</code>, C-style <code>for</code> loops with a scoped counter, <code>while</code>, and <code>do</code>-<code>while</code>.</p>
+                        <pre class="syntax-code"><code><span class="token-comment">// Conditional branching</span>
+<span class="token-kw">if</span> (score &gt;= <span class="token-num">90</span>) { <span class="token-kw">print</span>(<span class="token-str">"A"</span>); }
+<span class="token-kw">else</span> <span class="token-kw">if</span> (score &gt;= <span class="token-num">80</span>) { <span class="token-kw">print</span>(<span class="token-str">"B"</span>); }
+<span class="token-kw">else</span> { <span class="token-kw">print</span>(<span class="token-str">"C"</span>); }
+
+<span class="token-comment">// Scoped C-style for loop</span>
+<span class="token-kw">for</span> (<span class="token-kw">mut</span> i = <span class="token-num">0</span>; i &lt; <span class="token-num">5</span>; i = i + <span class="token-num">1</span>) {
+    <span class="token-kw">print</span>(i);
+}
+
+<span class="token-comment">// While &amp; do-while loops</span>
+<span class="token-kw">while</span> (n &gt; <span class="token-num">0</span>) { n = n - <span class="token-num">1</span>; }
+<span class="token-kw">do</span> { n = n + <span class="token-num">1</span>; } <span class="token-kw">while</span> (n &lt; <span class="token-num">10</span>);</code></pre>
+                    </article>
+                </div>
+                <div class="empty-state reference-empty" id="reference-empty" hidden>
+                    <div class="empty-title">No matching reference cards</div>
+                    <div class="empty-sub">Try a keyword such as <code>let</code>, <code>list</code>, or <code>while</code>.</div>
+                </div>
+                <nav class="next-links" aria-label="Explore">
+                    <a class="link-card" href="/playground">
+                        <span class="link-card-label">Try it</span>
+                        <span class="link-card-value">Run any snippet in the playground</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/pipeline">
+                        <span class="link-card-label">Internals</span>
+                        <span class="link-card-value">How C-- code is compiled</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/about">
+                        <span class="link-card-label">FAQ</span>
+                        <span class="link-card-value">Questions about C--</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                </nav>
+            </div>
+        </section>

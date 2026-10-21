@@ -1,0 +1,112 @@
+        <section class="tab-view" id="view-pipeline" aria-labelledby="pipeline-title">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">Internal architecture</div>
+                    <h1 class="doc-title" id="pipeline-title">The C-- compiler pipeline: lexer, parser, analyzer, and backends</h1>
+                    <p class="doc-lead">
+                        Four stages translate UTF-8 source into verified AST nodes, direct evaluation, or portable ISO C99.
+                        Each stage can be inspected against the code currently in the playground.
+                    </p>
+                </div>
+
+                <ol class="pipeline-visual-container">
+                    <li class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">Stage 01</span>
+                            <code class="step-module">cmm/lexer.py</code>
+                        </div>
+                        <h2 class="step-title">Lexical scanner</h2>
+                        <p class="step-desc">
+                            Normalizes UTF-8 input and scans it into a deterministic stream of typed tokens with exact 1-indexed line and column spans.
+                        </p>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>List[Token]</code></span>
+                            <button class="step-action" data-pipeline-action="btn-tokens">Inspect</button>
+                        </div>
+                    </li>
+
+                    <li class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">Stage 02</span>
+                            <code class="step-module">cmm/parser.py</code>
+                        </div>
+                        <h2 class="step-title">Recursive descent parser</h2>
+                        <p class="step-desc">
+                            Builds an Abstract Syntax Tree using LL(k) statement parsing combined with 10-tier Pratt precedence climbing for expressions.
+                        </p>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>Program(AST)</code></span>
+                            <button class="step-action" data-pipeline-action="btn-ast">Inspect</button>
+                        </div>
+                    </li>
+
+                    <li class="pipeline-step-card">
+                        <div class="step-header">
+                            <span class="step-badge">Stage 03</span>
+                            <code class="step-module">cmm/analyzer.py</code>
+                        </div>
+                        <h2 class="step-title">Semantic analyzer</h2>
+                        <p class="step-desc">
+                            Resolves lexical scopes, checks type compatibility, enforces <code>let</code>/<code>mut</code> rules, and verifies return completeness.
+                        </p>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>Verified AST</code></span>
+                            <button class="step-action" data-pipeline-action="btn-check">Inspect</button>
+                        </div>
+                    </li>
+
+                    <li class="pipeline-step-card dual-target-card">
+                        <div class="step-header">
+                            <span class="step-badge">Stage 04</span>
+                            <code class="step-module" title="cmm/interpreter.py &middot; cmm/codegen_c.py">interpreter &middot; codegen</code>
+                        </div>
+                        <h2 class="step-title">Dual execution backends</h2>
+                        <p class="step-desc">
+                            <strong>Target A</strong> &mdash; tree-walking reference evaluator.<br>
+                            <strong>Target B</strong> &mdash; hardened ISO C99 code generator.
+                        </p>
+                        <div class="step-meta">
+                            <span>Output &rarr; <code>stdout &middot; C99</code></span>
+                            <span class="step-actions">
+                                <button class="step-action" data-pipeline-action="btn-run">Run</button>
+                                <button class="step-action" data-pipeline-action="btn-transpile">C99</button>
+                            </span>
+                        </div>
+                    </li>
+                </ol>
+
+                <div class="pipeline-explanation-box">
+                    <div class="box-grid">
+                        <div>
+                            <h2 class="box-title">Normative reference interpreter</h2>
+                            <p>
+                                <code>cmm/interpreter.py</code> executes verified AST nodes with deterministic activation records, deep-copy value semantics, checked arithmetic, and a 100,000-step watchdog that stops runaway loops in interactive sessions.
+                            </p>
+                        </div>
+                        <div>
+                            <h2 class="box-title">ISO C99 source-to-source transpiler</h2>
+                            <p>
+                                <code>cmm/codegen_c.py</code> lowers C-- into portable C99 for <code>gcc -std=c99 -O2</code> or <code>clang</code>, injecting runtime bounds assertions, division-by-zero traps, and deep-copy helpers.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="next-links" aria-label="Explore">
+                    <a class="link-card" href="/reference">
+                        <span class="link-card-label">Next</span>
+                        <span class="link-card-value">C-- syntax reference</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/architecture">
+                        <span class="link-card-label">Guarantees</span>
+                        <span class="link-card-value">Six core safety invariants</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/playground">
+                        <span class="link-card-label">Try it</span>
+                        <span class="link-card-value">Inspect tokens and the AST online</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                </nav>
+            </div>
+        </section>
