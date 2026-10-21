@@ -1,0 +1,202 @@
+        <section class="tab-view" id="view-overview" aria-labelledby="home-title">
+            <div class="content-wrapper">
+                <div class="hero">
+                    <div class="hero-copy">
+                        <div class="doc-eyebrow">C-- programming language &middot; v0.2.0</div>
+                        <h1 class="hero-title" id="home-title">C Minus Minus: memory safety by removal, not by runtime.</h1>
+                        <p class="doc-lead">
+                            C-- keeps the deterministic control flow and small runtime footprint of ISO C, and removes the
+                            constructs behind entire classes of memory-corruption bugs at the grammar level. Write it in the
+                            browser, run it in the reference interpreter, or transpile it to portable C99.
+                        </p>
+                        <div class="hero-actions">
+                            <a class="btn btn-primary btn-lg" href="/playground">Open the online playground</a>
+                            <a class="btn btn-secondary btn-lg" href="/reference">Read the language reference</a>
+                        </div>
+                        <div class="install-snippet">
+                            <span class="install-prompt" aria-hidden="true">$</span>
+                            <code id="install-cmd">python3 -m cmm run demo.cmm</code>
+                            <button class="install-copy" data-copy-target="install-cmd" title="Copy command" aria-label="Copy command">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-code">
+                        <div class="hero-code-header">
+                            <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="hero-code-file">factorial.cmm</span>
+                            <button class="btn-load-snippet" data-snippet="factorial" title="Load example in the playground">Run in playground &rarr;</button>
+                        </div>
+<pre class="syntax-code"><code><span class="token-kw">module</span> main;
+
+<span class="token-kw">fn</span> <span class="token-fn">factorial</span>(n: <span class="token-type">int</span>) -&gt; <span class="token-type">int</span> {
+    <span class="token-kw">if</span> (n &lt;= <span class="token-num">1</span>) { <span class="token-kw">return</span> <span class="token-num">1</span>; }
+    <span class="token-kw">return</span> n * <span class="token-fn">factorial</span>(n - <span class="token-num">1</span>);
+}
+
+<span class="token-kw">fn</span> <span class="token-kw">main</span>() {
+    <span class="token-kw">let</span> result = <span class="token-fn">factorial</span>(<span class="token-num">6</span>);
+    <span class="token-kw">print</span>(result);   <span class="token-comment">// 720</span>
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat"><span class="stat-val">60</span><span class="stat-lbl">Diagnostic codes</span></div>
+                    <div class="stat"><span class="stat-val">10</span><span class="stat-lbl">Precedence tiers</span></div>
+                    <div class="stat"><span class="stat-val">2</span><span class="stat-lbl">Execution backends</span></div>
+                    <div class="stat"><span class="stat-val">0</span><span class="stat-lbl">Runtime dependencies</span></div>
+                </div>
+
+                <section class="prose-section" aria-labelledby="what-is">
+                    <h2 class="section-title" id="what-is">What is C--?</h2>
+                    <div class="prose">
+                        <p>
+                            C-- (pronounced &ldquo;C minus minus&rdquo;) is a statically typed, imperative systems programming
+                            language built as a compiler design project. Its guiding principle is <strong>Safety by Removal</strong>:
+                            instead of adding a garbage collector, a borrow checker, or runtime sanitizers on top of C, C-- deletes
+                            the features that make memory corruption possible. There are no raw pointers, no null values, no
+                            pointer arithmetic and no uninitialized variables, so the bugs that depend on them cannot be written.
+                        </p>
+                        <p>
+                            The toolchain is written in pure Python with zero external runtime dependencies. A handwritten lexer,
+                            a recursive descent parser with Pratt precedence climbing, and a semantic analyzer check every program
+                            before it runs. Verified programs then execute in a deterministic tree-walking interpreter, or are
+                            transpiled into self-contained, bounds-checked ISO C99 that compiles cleanly with GCC, Clang, or MSVC.
+                        </p>
+                        <p class="prose-note">
+                            Not to be confused with the older <em>C--</em> intermediate language used inside the Glasgow Haskell
+                            Compiler. This C-- is a source language for people writing programs.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="prose-section" aria-labelledby="why">
+                    <h2 class="section-title" id="why">Why memory safety matters</h2>
+                    <div class="prose">
+                        <p>
+                            Microsoft&rsquo;s Security Response Center has reported that about 70% of the vulnerabilities it assigns a
+                            CVE each year are memory-safety issues, and the Chromium project reports a similar share among its
+                            serious security bugs
+                            (<a href="https://msrc.microsoft.com/blog/2019/07/a-proactive-approach-to-more-secure-code/" target="_blank" rel="noopener">MSRC, 2019</a>;
+                            <a href="https://www.chromium.org/Home/chromium-security/memory-safety/" target="_blank" rel="noopener">Chromium Security</a>).
+                            Buffer overflows, use-after-free, and null dereferences are the usual culprits. C-- removes the language
+                            features those bugs rely on, while keeping the explicit, predictable style that makes C easy to reason about.
+                        </p>
+                    </div>
+                </section>
+
+                <div class="spec-comparison-grid">
+                    <div class="spec-panel">
+                        <div class="spec-panel-header">
+                            <span class="spec-index">01</span>
+                            <h2 class="spec-panel-title">Eliminated hazards</h2>
+                        </div>
+                        <p class="spec-panel-body">
+                            Rather than detecting unsafe operations after the fact, C-- removes the underlying constructs outright:
+                        </p>
+                        <dl class="spec-list">
+                            <div class="spec-list-row">
+                                <dt>Raw pointers</dt>
+                                <dd>No address-of (<code>&amp;</code>), dereference (<code>*</code>), or pointer arithmetic exists in the grammar.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Null references</dt>
+                                <dd>Absent by construction. Every binding requires a statically verified initial value.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Unchecked indexing</dt>
+                                <dd>All collection accesses validate bounds at runtime with deterministic traps.</dd>
+                            </div>
+                            <div class="spec-list-row">
+                                <dt>Implicit coercions</dt>
+                                <dd>Strict static typing prevents silent narrowing, signed/unsigned mismatches, and truthy casts.</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="spec-panel">
+                        <div class="spec-panel-header">
+                            <span class="spec-index">02</span>
+                            <h2 class="spec-panel-title">Design philosophy</h2>
+                        </div>
+                        <p class="spec-panel-body">
+                            Modern memory-safe languages typically trade simplicity for expressive alias tracking (borrow checking, lifetime annotations) or a garbage-collected runtime.
+                        </p>
+                        <blockquote class="spec-quote">
+                            Where verification of arbitrary aliasing is complex, C-- enforces deep-copy value semantics and lexical immutability by default.
+                        </blockquote>
+                        <p class="spec-panel-body">
+                            By treating composite collections (<code>array</code>, <code>list</code>, <code>stack</code>, <code>queue</code>) as isolated values on assignment and argument passing, C-- guarantees alias freedom without lifetime annotations.
+                        </p>
+                    </div>
+                </div>
+
+                <section class="prose-section" aria-labelledby="compare">
+                    <h2 class="section-title" id="compare">C vs C-- vs Rust</h2>
+                    <p class="section-lead">How C-- compares with the language it simplifies and with the best-known memory-safe systems language.</p>
+                    <div class="table-scroll">
+                        <table class="compare-table">
+                            <thead>
+                                <tr><th scope="col">Property</th><th scope="col">C</th><th scope="col">C--</th><th scope="col">Rust</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row">Null pointers</th><td>Allowed</td><td class="is-cmm">Do not exist</td><td>Not in safe code (<code>Option</code>)</td></tr>
+                                <tr><th scope="row">Pointer arithmetic</th><td>Allowed</td><td class="is-cmm">Not in the grammar</td><td>Only inside <code>unsafe</code></td></tr>
+                                <tr><th scope="row">Default mutability</th><td>Mutable</td><td class="is-cmm">Immutable (<code>let</code>), opt-in <code>mut</code></td><td>Immutable, opt-in <code>mut</code></td></tr>
+                                <tr><th scope="row">Uninitialized variables</th><td>Allowed</td><td class="is-cmm">Rejected at compile time</td><td>Rejected at compile time</td></tr>
+                                <tr><th scope="row">Array bounds</th><td>Unchecked</td><td class="is-cmm">Always checked</td><td>Checked in safe code</td></tr>
+                                <tr><th scope="row">Signed integer overflow</th><td>Undefined behaviour</td><td class="is-cmm">Deterministic runtime trap</td><td>Panics in debug, wraps in release</td></tr>
+                                <tr><th scope="row">Aliasing model</th><td>Unrestricted</td><td class="is-cmm">Deep-copy value semantics</td><td>Ownership and borrowing</td></tr>
+                                <tr><th scope="row">Learning curve</th><td>Moderate</td><td class="is-cmm">Gentle, C-like</td><td>Steep</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="prose-section" aria-labelledby="features">
+                    <h2 class="section-title" id="features">Language features at a glance</h2>
+                    <ul class="feature-list">
+                        <li><strong>Static types:</strong> 64-bit <code>int</code>, IEEE-754 <code>float</code>, strict <code>bool</code>, and UTF-8 <code>string</code>.</li>
+                        <li><strong>Built-in containers:</strong> <code>array&lt;T&gt;</code>, <code>list&lt;T&gt;</code>, <code>stack&lt;T&gt;</code>, and <code>queue&lt;T&gt;</code> with value semantics.</li>
+                        <li><strong>Structured control flow:</strong> <code>if</code>/<code>else</code>, <code>switch</code>, <code>while</code>, <code>do</code>-<code>while</code>, and <code>for</code>, with mandatory braces.</li>
+                        <li><strong>Typed functions:</strong> explicit parameter and return types, recursion with a call-depth guard.</li>
+                        <li><strong>Friendly diagnostics:</strong> 60 error codes with plain-language explanations, fixes, and &ldquo;did you mean&rdquo; suggestions.</li>
+                        <li><strong>Two backends:</strong> a reference interpreter with a step watchdog, and an ISO C99 transpiler.</li>
+                    </ul>
+                </section>
+
+                <section class="prose-section" aria-labelledby="get-started">
+                    <h2 class="section-title" id="get-started">Get started in a minute</h2>
+                    <p class="section-lead">C-- needs only Python 3.10 or newer. Clone the repository and run a program directly:</p>
+<pre class="syntax-code code-block"><code>git clone https://github.com/ronitmexson2924/C--.git
+cd C--
+python3 -m cmm run demo.cmm        <span class="token-comment"># run in the interpreter</span>
+python3 -m cmm check demo.cmm      <span class="token-comment"># type-check only</span></code></pre>
+                    <p class="section-lead">
+                        Prefer not to install anything? Use the <a href="/playground">online C-- playground</a>, browse the
+                        <a href="/reference">syntax reference</a>, see how the <a href="/pipeline">compiler pipeline</a> works,
+                        explore the <a href="/architecture">language architecture</a>, or meet <a href="/about">the team behind C--</a>.
+                        The full source is on <a href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener">the C-- GitHub repository</a>.
+                    </p>
+                </section>
+
+                <nav class="next-links" aria-label="Explore">
+                    <a class="link-card" href="/playground">
+                        <span class="link-card-label">Try it</span>
+                        <span class="link-card-value">Online playground &amp; compiler explorer</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/architecture">
+                        <span class="link-card-label">Learn</span>
+                        <span class="link-card-value">Six core safety guarantees</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/about">
+                        <span class="link-card-label">About</span>
+                        <span class="link-card-value">Team, advisor &amp; FAQ</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                </nav>
+            </div>
+        </section>

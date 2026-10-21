@@ -1,0 +1,158 @@
+        <section class="tab-view" id="view-playground" aria-labelledby="playground-title">
+            <{{@PLAYGROUND_HEADING}} class="sr-only" id="playground-title">C-- online playground and compiler explorer</{{@PLAYGROUND_HEADING}}>
+            <noscript>
+                <div class="noscript-banner">
+                    The interactive C-- playground needs JavaScript. You can still read the
+                    <a href="/reference">language reference</a> or <a href="/">learn what C-- is</a>.
+                </div>
+            </noscript>
+            <div class="playground-toolbar" id="playground-toolbar">
+                <div class="toolbar-left">
+                    <label for="preset-select" class="toolbar-label">Example</label>
+                    <div class="select-wrapper">
+                        <select id="preset-select" class="preset-dropdown">
+                            <option value="factorial">01 &mdash; Factorial &amp; Recursion</option>
+                            <option value="collections">02 &mdash; Dynamic Lists &amp; Slices</option>
+                            <option value="stack_queue">03 &mdash; LIFO Stacks &amp; FIFO Queues</option>
+                            <option value="value_semantics">04 &mdash; Deep-Copy Value Semantics</option>
+                            <option value="switch_matching">05 &mdash; Switch-Case Matching</option>
+                            <option value="transpile_demo">06 &mdash; ISO C99 Transpilation</option>
+                            <option value="error_diagnostic">07 &mdash; Diagnostics &amp; Typo Recovery</option>
+                        </select>
+                    </div>
+                    <span class="preset-hint" id="preset-hint">Typed function declaration, pure recursion, and call stack safety.</span>
+                </div>
+
+                <div class="toolbar-right">
+                    <div class="action-group-inspect" role="group" aria-label="Inspect">
+                        <button class="btn btn-ghost" id="btn-check" title="Run static type &amp; scope analysis">Type Check</button>
+                        <button class="btn btn-ghost" id="btn-ast" title="Inspect Abstract Syntax Tree">AST</button>
+                        <button class="btn btn-ghost" id="btn-tokens" title="Inspect lexer token stream">Tokens</button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <div class="action-group-utility" role="group" aria-label="Editor utilities">
+                        <button class="btn btn-ghost btn-icon-only" id="btn-reset" title="Reset editor to selected example" aria-label="Reset editor">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                        </button>
+                        <button class="btn btn-ghost btn-icon-only" id="btn-share" title="Copy shareable link" aria-label="Copy shareable link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        </button>
+                        <button class="btn btn-ghost btn-icon-only" id="btn-download" title="Download source (.cmm)" aria-label="Download source">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                    </div>
+
+                    <span class="toolbar-sep" aria-hidden="true"></span>
+
+                    <div class="action-group-primary">
+                        <button class="btn btn-secondary btn-transpile" id="btn-transpile" title="Transpile to ISO C99 (Ctrl+Shift+Enter)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                            <span>Transpile C99</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-run" title="Run in the reference interpreter (Ctrl+Enter)">
+                            <svg class="btn-icon-play" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                            </svg>
+                            <span class="btn-spinner" aria-hidden="true"></span>
+                            <span>Run</span>
+                            <kbd class="btn-kbd" data-mod-key>Ctrl &#9166;</kbd>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="studio-split-pane" id="studio-split-pane">
+                <!-- Editor -->
+                <div class="studio-pane editor-pane" id="editor-pane">
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <svg class="pane-file-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span class="pane-filename">playground.cmm</span>
+                            <span class="save-indicator" id="save-indicator" title="Draft is saved locally in this browser">Saved</span>
+                        </div>
+                        <div class="pane-meta">
+                            <span id="editor-line-col">Ln 1, Col 1</span>
+                            <span class="meta-divider" aria-hidden="true">&middot;</span>
+                            <span id="editor-char-count">0 chars</span>
+                            <button class="pane-action-btn" id="btn-copy-source" title="Copy source code">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-wrapper" id="editor-wrapper">
+                        <div class="line-gutter" id="line-gutter" aria-hidden="true"><div class="gutter-inner" id="gutter-inner"></div></div>
+                        <div class="editor-surface" id="editor-surface">
+                            <div class="editor-decorations" id="editor-decorations" aria-hidden="true">
+                                <div class="active-line" id="active-line"></div>
+                            </div>
+                            <pre class="editor-highlight" id="editor-highlight" aria-hidden="true"></pre>
+                            <textarea id="code-editor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="C-- source code" placeholder="// Write C-- here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pane-resizer" id="pane-resizer" title="Drag to resize. Double-click to reset." role="separator" aria-orientation="vertical" aria-label="Resize panes" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" tabindex="0"></div>
+
+                <!-- Output -->
+                <div class="studio-pane output-pane" id="output-pane">
+                    <div class="pane-header output-header">
+                        <div class="output-tabs" id="output-tabs" role="tablist" aria-label="Output">
+                            <button class="output-tab active" data-output="console" id="out-tab-console" role="tab" aria-selected="true">Console</button>
+                            <button class="output-tab" data-output="problems" id="out-tab-problems" role="tab" aria-selected="false">Problems <span class="tab-count" id="problems-count" hidden>0</span></button>
+                            <button class="output-tab" data-output="c99" id="out-tab-c99" role="tab" aria-selected="false">C99</button>
+                            <button class="output-tab" data-output="ast" id="out-tab-ast" role="tab" aria-selected="false">AST</button>
+                            <button class="output-tab" data-output="tokens" id="out-tab-tokens" role="tab" aria-selected="false">Tokens</button>
+                        </div>
+                        <div class="output-actions">
+                            <span class="status-pill status-ready" id="execution-status-pill" role="status" aria-live="polite">Ready</span>
+                            <button class="btn-copy" id="btn-copy-output" title="Copy active output">Copy</button>
+                            <button class="btn-clear" id="btn-clear-output" title="Clear output">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-trace" id="pipeline-trace" aria-label="Compilation stages">
+                        <span class="trace-step" data-stage="lexer">Lex</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="parser">Parse</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="analyzer">Analyze</span>
+                        <span class="trace-arrow" aria-hidden="true"></span>
+                        <span class="trace-step" data-stage="backend">Execute</span>
+                        <span class="trace-meta" id="trace-meta"></span>
+                    </div>
+
+                    <div class="output-content-container" id="output-content-container">
+                        <div class="output-view active" id="output-view-console" role="tabpanel">
+                            <pre class="terminal-display" id="terminal-display"><span class="terminal-dim">// Press Run to execute in the C-- reference interpreter.</span></pre>
+                        </div>
+                        <div class="output-view" id="output-view-problems" role="tabpanel">
+                            <div class="problems-list" id="problems-list">
+                                <div class="empty-state">
+                                    <div class="empty-title">No problems detected</div>
+                                    <div class="empty-sub">Run or type-check your program to collect diagnostics.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="output-view" id="output-view-c99" role="tabpanel">
+                            <pre class="code-display" id="c99-display"><span class="terminal-dim">// Transpile to emit bounds-checked ISO C99 source.</span></pre>
+                        </div>
+                        <div class="output-view" id="output-view-ast" role="tabpanel">
+                            <pre class="code-display" id="ast-display"><span class="terminal-dim">// Inspect the Abstract Syntax Tree produced by the parser.</span></pre>
+                        </div>
+                        <div class="output-view" id="output-view-tokens" role="tabpanel">
+                            <pre class="code-display" id="tokens-display"><span class="terminal-dim">// Inspect the lexical token stream. Click a token to locate it in the editor.</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>

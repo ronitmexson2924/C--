@@ -229,8 +229,11 @@ let activePresets = FALLBACK_PRESETS;
 
 const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const STORAGE_KEYS = { theme: "cmm-theme", draft: "cmm-draft", split: "cmm-split" };
-const TAB_IDS = ["playground", "overview", "features", "pipeline", "syntax"];
-const TAB_LABELS = { playground: "Playground", overview: "Overview", features: "Architecture", pipeline: "Pipeline", syntax: "Reference" };
+const TAB_IDS = ["overview", "playground", "features", "pipeline", "syntax", "about"];
+const TAB_LABELS = { overview: "Overview", playground: "Playground", features: "Architecture", pipeline: "Pipeline", syntax: "Reference", about: "About" };
+const TAB_PATHS = { overview: "/", playground: "/playground", features: "/architecture", pipeline: "/pipeline", syntax: "/reference", about: "/about" };
+// Section ids used by the old single-page #hash URLs
+const LEGACY_HASH_TABS = ["playground", "overview", "features", "pipeline", "syntax"];
 const STAGES = ["lexer", "parser", "analyzer", "backend"];
 
 const state = {
@@ -240,11 +243,13 @@ const state = {
     outputs: { console: "", problems: "", c99: "", ast: "", tokens: "" },
     inflight: null,
     liveCheck: null,
+    currentTab: null,
     healthTimer: null,
     c99Ready: false
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (redirectLegacyHash()) return;
     applyPlatformLabels();
     initThemeToggle();
     initNavigationTabs();
@@ -252,11 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initSplitResizer();
     initOutputTabs();
     initPresets();
-    initReferenceLoaders();
     initActionButtons();
-    initPipelineActions();
-    initReferenceFilter();
-    initCopyButtons();
+    initContentActions();
     initCommandPalette();
     initShortcutsModal();
     initGlobalShortcuts();
@@ -389,53 +391,201 @@ function initThemeToggle() {
 }
 
 /* ==========================================================================
-   3. NAVIGATION TABS (HASH ROUTED)
+   3. NAVIGATION (HISTORY API ROUTING OVER SERVER-RENDERED PAGES)
+   Every section has its own URL rendered by the server. Sections that are not
+   in the initial document are fetched once and kept, so switching is instant.
    ========================================================================== */
-function initNavigationTabs() {
-    const tabButtons = document.querySelectorAll(".nav-tab");
+const pageCache = new Map();
+const pageMeta = {};
 
-    tabButtons.forEach((btn, index) => {
-        btn.addEventListener("click", () => navigateTo(btn.getAttribute("data-tab")));
-        btn.addEventListener("keydown", (e) => {
-            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-            e.preventDefault();
-            const delta = e.key === "ArrowRight" ? 1 : -1;
-            const next = tabButtons[(index + delta + tabButtons.length) % tabButtons.length];
-            next.focus();
-            navigateTo(next.getAttribute("data-tab"));
-        });
+function tabFromPath(pathname = location.pathname) {
+    const path = pathname.replace(/\/+$/, "") || "/";
+    return TAB_IDS.find(tab => TAB_PATHS[tab] === path) || null;
+}
+
+function redirectLegacyHash() {
+    const hash = location.hash.slice(1);
+    if (location.pathname !== "/" || !LEGACY_HASH_TABS.includes(hash)) return false;
+    const target = TAB_PATHS[hash];
+    if (target === location.pathname) {
+        history.replaceState(null, "", target + location.search);
+        return false;
+    }
+    location.replace(target + location.search);
+    return true;
+}
+
+function initNavigationTabs() {
+    const initial = tabFromPath();
+    pageMeta[initial || "notfound"] = readMeta(document);
+
+    document.addEventListener("click", (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const link = e.target.closest("a[href]");
+        if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+        const url = new URL(link.href, location.href);
+        if (url.origin !== location.origin) return;
+        const tab = tabFromPath(url.pathname);
+        if (!tab) return;
+        // Same-page anchors scroll natively
+        if (tab === state.currentTab && url.hash && url.pathname === location.pathname) return;
+        e.preventDefault();
+        navigateTo(tab, { hash: url.hash });
     });
 
-    window.addEventListener("hashchange", () => activateTab(tabFromHash()));
+    const prefetchFromEvent = (e) => {
+        const link = e.target.closest && e.target.closest("a[href]");
+        if (!link) return;
+        const url = new URL(link.href, location.href);
+        const tab = url.origin === location.origin ? tabFromPath(url.pathname) : null;
+        if (tab && !$(`view-${tab}`)) fetchPage(TAB_PATHS[tab]).catch(() => {});
+    };
+    document.addEventListener("mouseover", prefetchFromEvent, { passive: true });
+    document.addEventListener("focusin", prefetchFromEvent);
+
+    window.addEventListener("popstate", () => {
+        const tab = tabFromPath();
+        if (!tab) {
+            location.reload();
+            return;
+        }
+        if (tab === state.currentTab) {
+            scrollToHash(location.hash);
+            return;
+        }
+        ensureView(tab).then(ok => {
+            if (!ok) {
+                location.reload();
+                return;
+            }
+            activateTab(tab);
+            scrollToHash(location.hash);
+        });
+    });
     window.addEventListener("resize", () => positionNavIndicator());
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => positionNavIndicator(false));
 
-    activateTab(tabFromHash(), false);
-}
-
-function tabFromHash() {
-    const hash = location.hash.replace("#", "");
-    return TAB_IDS.includes(hash) ? hash : "playground";
-}
-
-function navigateTo(tab) {
-    if (!TAB_IDS.includes(tab)) return;
-    if (location.hash !== `#${tab}`) {
-        history.pushState(null, "", `#${tab}`);
+    if (initial) activateTab(initial, false);
+    if (location.hash) {
+        const hash = location.hash;
+        requestAnimationFrame(() => scrollToHash(hash));
+        // Web fonts can reflow the page after the first scroll; settle on the anchor again
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => { if (location.hash === hash) scrollToHash(hash); });
+        }
     }
-    activateTab(tab);
+
+    // Warm the cache for the other pages once the browser is idle
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+    idle(() => TAB_IDS.forEach(tab => {
+        if (!$(`view-${tab}`)) fetchPage(TAB_PATHS[tab]).catch(() => {});
+    }));
+}
+
+function fetchPage(path) {
+    if (!pageCache.has(path)) {
+        const request = fetch(path, { headers: { Accept: "text/html" }, credentials: "same-origin" })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.text();
+            })
+            .catch(err => {
+                pageCache.delete(path);
+                throw err;
+            });
+        pageCache.set(path, request);
+    }
+    return pageCache.get(path);
+}
+
+async function ensureView(tab) {
+    if ($(`view-${tab}`)) return true;
+    try {
+        const markup = await fetchPage(TAB_PATHS[tab]);
+        if ($(`view-${tab}`)) return true;
+        const doc = new DOMParser().parseFromString(markup, "text/html");
+        const section = doc.getElementById(`view-${tab}`);
+        if (!section) return false;
+        section.classList.remove("active");
+        $("main-container").appendChild(document.importNode(section, true));
+        pageMeta[tab] = readMeta(doc);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function readMeta(doc) {
+    const attr = (selector, name) => {
+        const el = doc.querySelector(selector);
+        return el ? el.getAttribute(name) : null;
+    };
+    return {
+        title: doc.title,
+        description: attr('meta[name="description"]', "content"),
+        canonical: attr('link[rel="canonical"]', "href")
+    };
+}
+
+function applyMeta(meta) {
+    if (!meta) return;
+    const set = (selector, name, value) => {
+        const el = document.querySelector(selector);
+        if (el && value) el.setAttribute(name, value);
+    };
+    if (meta.title) document.title = meta.title;
+    set('meta[name="description"]', "content", meta.description);
+    set('meta[property="og:title"]', "content", meta.title);
+    set('meta[property="og:description"]', "content", meta.description);
+    set('meta[name="twitter:title"]', "content", meta.title);
+    set('meta[name="twitter:description"]', "content", meta.description);
+    set('link[rel="canonical"]', "href", meta.canonical);
+    set('meta[property="og:url"]', "content", meta.canonical);
+}
+
+function scrollToHash(hash) {
+    if (!hash || hash.length < 2) return;
+    let target = null;
+    try { target = document.getElementById(decodeURIComponent(hash.slice(1))); } catch { target = null; }
+    if (target) target.scrollIntoView({ block: "start" });
+}
+
+function navigateTo(tab, options = {}) {
+    const path = TAB_PATHS[tab];
+    if (!path) return Promise.resolve();
+    const hash = options.hash || "";
+    const commit = () => {
+        if (location.pathname !== path || location.hash !== hash) {
+            history.pushState(null, "", path + hash);
+        }
+        if (tab !== state.currentTab) activateTab(tab);
+        if (hash) scrollToHash(hash);
+    };
+    // Already-loaded views switch synchronously so callers can focus elements right away
+    if ($(`view-${tab}`)) {
+        commit();
+        return Promise.resolve();
+    }
+    return ensureView(tab).then(ok => {
+        if (ok) commit();
+        else location.href = path + hash;
+    });
 }
 
 function activateTab(targetTab, animate = true) {
-    document.querySelectorAll(".nav-tab").forEach(b => {
-        const isActive = b.getAttribute("data-tab") === targetTab;
-        b.classList.toggle("active", isActive);
-        b.setAttribute("aria-selected", String(isActive));
-        b.tabIndex = isActive ? 0 : -1;
+    state.currentTab = targetTab;
+    document.querySelectorAll(".nav-tab").forEach(link => {
+        const isActive = link.getAttribute("data-tab") === targetTab;
+        link.classList.toggle("active", isActive);
+        if (isActive) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
     });
     document.querySelectorAll(".tab-view").forEach(v => {
-        v.classList.toggle("active", v.id === `view-${targetTab}`);
+        const isActive = v.id === `view-${targetTab}`;
+        v.classList.toggle("active", isActive);
+        v.classList.toggle("animate-in", isActive && animate);
     });
+    applyMeta(pageMeta[targetTab]);
     const view = $(`view-${targetTab}`);
     if (view && targetTab !== "playground") view.scrollTop = 0;
     positionNavIndicator(animate);
@@ -463,7 +613,7 @@ const LANGS = {
         keywords: new Set(["module", "fn", "main", "let", "mut", "if", "else", "while", "do", "for", "print",
             "true", "false", "return", "switch", "case", "default"]),
         types: new Set(["int", "float", "bool", "string", "array", "list", "stack", "queue"]),
-        builtins: new Set(["read_line", "parse_int", "parse_float"]),
+        builtins: new Set(["input", "parse_int", "parse_float"]),
         preprocessor: false
     },
     c: {
@@ -1143,10 +1293,12 @@ function initPresets() {
     });
 }
 
-function initReferenceLoaders() {
-    document.querySelectorAll(".btn-load-snippet").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const key = btn.getAttribute("data-snippet");
+// Content sections can be inserted after load, so their controls use delegation
+function initContentActions() {
+    document.addEventListener("click", (e) => {
+        const snippetBtn = e.target.closest(".btn-load-snippet");
+        if (snippetBtn) {
+            const key = snippetBtn.getAttribute("data-snippet");
             const preset = activePresets[key] || FALLBACK_PRESETS[key];
             const code = preset ? preset.code : REFERENCE_SNIPPETS[key];
             if (!code) return;
@@ -1156,43 +1308,35 @@ function initReferenceLoaders() {
                 editorApi.setCode(code);
                 setStatus("Ready", "status-ready");
             }
-        });
-    });
-}
+            return;
+        }
 
-function initReferenceFilter() {
-    const input = $("reference-search");
-    if (!input) return;
-    const cards = [...document.querySelectorAll("#syntax-grid .syntax-card")];
-    input.addEventListener("input", () => {
-        const terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+        const pipelineBtn = e.target.closest("[data-pipeline-action]");
+        if (pipelineBtn) {
+            navigateTo("playground");
+            const target = $(pipelineBtn.getAttribute("data-pipeline-action"));
+            if (target) target.click();
+            return;
+        }
+
+        const copyBtn = e.target.closest("[data-copy-target]");
+        if (copyBtn) {
+            const target = $(copyBtn.getAttribute("data-copy-target"));
+            if (target) copyText(target.textContent.trim(), "Command copied");
+        }
+    });
+
+    document.addEventListener("input", (e) => {
+        if (e.target.id !== "reference-search") return;
+        const terms = e.target.value.toLowerCase().split(/\s+/).filter(Boolean);
         let visible = 0;
-        cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const match = terms.every(t => text.includes(t));
+        document.querySelectorAll("#syntax-grid .syntax-card").forEach(card => {
+            const match = terms.every(t => card.textContent.toLowerCase().includes(t));
             card.hidden = !match;
             if (match) visible++;
         });
-        $("reference-empty").hidden = visible > 0;
-    });
-}
-
-function initCopyButtons() {
-    document.querySelectorAll("[data-copy-target]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const target = $(btn.getAttribute("data-copy-target"));
-            if (target) copyText(target.textContent.trim(), "Command copied");
-        });
-    });
-}
-
-function initPipelineActions() {
-    document.querySelectorAll("[data-pipeline-action]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            navigateTo("playground");
-            const target = $(btn.getAttribute("data-pipeline-action"));
-            if (target) target.click();
-        });
+        const empty = $("reference-empty");
+        if (empty) empty.hidden = visible > 0;
     });
 }
 
@@ -1471,7 +1615,7 @@ function scheduleLiveCheck() {
 
 function shareLink() {
     const code = $("code-editor").value;
-    const url = `${location.origin}${location.pathname}?code=${encodeShare(code)}#playground`;
+    const url = `${location.origin}${TAB_PATHS.playground}?code=${encodeShare(code)}`;
     if (url.length > 8000) {
         showToast("Program is too large to share as a link", "error");
         return;
@@ -1677,7 +1821,7 @@ const SHORTCUTS = [
     ["Save draft", [IS_MAC ? "\u2318" : "Ctrl", "S"]],
     ["Toggle line comment", [IS_MAC ? "\u2318" : "Ctrl", "/"]],
     ["Indent / outdent", ["Tab", "\u21e7 Tab"]],
-    ["Switch section", ["Alt", "1\u20135"]],
+    ["Switch section", ["Alt", "1\u20136"]],
     ["Show this dialog", ["?"]]
 ];
 
@@ -1726,7 +1870,7 @@ function initGlobalShortcuts() {
             if (shortcutsApi.isOpen && shortcutsApi.isOpen()) { e.preventDefault(); shortcutsApi.close(); }
             return;
         }
-        if (e.altKey && !mod && /^Digit[1-5]$/.test(e.code)) {
+        if (e.altKey && !mod && /^Digit[1-6]$/.test(e.code)) {
             e.preventDefault();
             navigateTo(TAB_IDS[Number(e.code.slice(5)) - 1]);
             return;
@@ -1736,7 +1880,7 @@ function initGlobalShortcuts() {
             openShortcuts();
             return;
         }
-        if (!typing && mod && e.key === "Enter" && tabFromHash() === "playground") {
+        if (!typing && mod && e.key === "Enter" && state.currentTab === "playground") {
             e.preventDefault();
             $(e.shiftKey ? "btn-transpile" : "btn-run").click();
         }

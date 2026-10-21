@@ -1,0 +1,116 @@
+        <section class="tab-view" id="view-about" aria-labelledby="about-title">
+            <div class="content-wrapper">
+                <div class="doc-header">
+                    <div class="doc-eyebrow">Compiler Design Capstone &middot; Session 2024&ndash;2025</div>
+                    <h1 class="doc-title" id="about-title">About C-- and the team</h1>
+                    <p class="doc-lead">
+                        C-- (C Minus Minus) was designed and built by three students of the School of Computer Science &amp;
+                        Engineering (SCOPE) as a compiler design project, under the supervision of Prof. Hariharan R L.
+                    </p>
+                </div>
+
+                <section class="team-section" aria-labelledby="team-heading">
+                    <div class="section-header">
+                        <h2 class="section-title" id="team-heading">The team</h2>
+                        <span class="section-meta">School of Computer Science &amp; Engineering (SCOPE)</span>
+                    </div>
+
+                    <div class="team-grid">
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">RM</span>
+                            <div class="member-info">
+                                <h3 class="member-name">Ronit Mexson</h3>
+                                <div class="member-reg">24BAI0036</div>
+                            </div>
+                        </article>
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">MP</span>
+                            <div class="member-info">
+                                <h3 class="member-name">Mit Kumar Raju Panchal</h3>
+                                <div class="member-reg">24BAI0279</div>
+                            </div>
+                        </article>
+                        <article class="member-card">
+                            <span class="member-avatar" aria-hidden="true">GG</span>
+                            <div class="member-info">
+                                <h3 class="member-name">Garv Gupta</h3>
+                                <div class="member-reg">24BDS0169</div>
+                            </div>
+                        </article>
+                        <article class="member-card member-card-advisor">
+                            <span class="member-avatar" aria-hidden="true">HR</span>
+                            <div class="member-info">
+                                <h3 class="member-name">Prof. Hariharan R L</h3>
+                                <div class="member-reg">Faculty advisor &middot; Center for AI Research</div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="link-row">
+                        <a class="link-card" href="https://github.com/ronitmexson2924/C--" target="_blank" rel="noopener">
+                            <span class="link-card-label">Source code</span>
+                            <span class="link-card-value">C-- repository on GitHub</span>
+                            <span class="link-card-arrow" aria-hidden="true">&nearr;</span>
+                        </a>
+                        <a class="link-card" href="/playground">
+                            <span class="link-card-label">Live demo</span>
+                            <span class="link-card-value">C-- online playground</span>
+                            <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                        </a>
+                        <a class="link-card" href="/document/C_Minus_Minus_Language_Specification_and_Compiler_Report.pdf" target="_blank" rel="noopener">
+                            <span class="link-card-label">Formal report</span>
+                            <span class="link-card-value">Language specification (PDF)</span>
+                            <span class="link-card-arrow" aria-hidden="true">&nearr;</span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="prose-section faq-section" aria-labelledby="faq-heading">
+                    <h2 class="section-title" id="faq-heading">Frequently asked questions</h2>
+                    <div class="faq-list">
+                        <details class="faq-item" open>
+                            <summary><h3 class="faq-q">What is C--?</h3></summary>
+                            <p class="faq-a">C-- (C Minus Minus) is a statically typed, memory-safe imperative programming language. It keeps C&rsquo;s explicit, predictable style but removes raw pointers, null values, pointer arithmetic, and uninitialized variables, so the memory bugs that depend on them cannot be written.</p>
+                        </details>
+                        <details class="faq-item">
+                            <summary><h3 class="faq-q">How is C-- different from C?</h3></summary>
+                            <p class="faq-a">C-- has no pointers or null, makes bindings immutable unless declared with <code>mut</code>, requires every variable to be initialized, checks every array and list index at runtime, and traps on integer overflow and division by zero instead of producing undefined behaviour. Collections are copied by value, so two names never alias the same data.</p>
+                        </details>
+                        <details class="faq-item">
+                            <summary><h3 class="faq-q">Is C-- memory safe?</h3></summary>
+                            <p class="faq-a">Yes, by construction. Buffer overflows, null dereferences, and use-after-free are not expressible in the language, because the constructs they require do not exist in its grammar. Remaining runtime faults, such as an out-of-bounds index, stop the program with a clear diagnostic instead of corrupting memory.</p>
+                        </details>
+                        <details class="faq-item">
+                            <summary><h3 class="faq-q">Can C-- compile to C?</h3></summary>
+                            <p class="faq-a">Yes. The C99 backend transpiles verified C-- programs into self-contained ISO C99 with bounds checks, overflow checks, and division-by-zero traps built in, ready for <code>gcc -std=c99</code>, Clang, or MSVC. You can try it with the Transpile C99 button in the <a href="/playground">playground</a>.</p>
+                        </details>
+                        <details class="faq-item">
+                            <summary><h3 class="faq-q">Is C-- related to the C-- used by GHC?</h3></summary>
+                            <p class="faq-a">No. The Glasgow Haskell Compiler uses an unrelated intermediate language that is also called C--. This C-- is a source language designed for people to write programs in.</p>
+                        </details>
+                        <details class="faq-item">
+                            <summary><h3 class="faq-q">What do I need to run C--?</h3></summary>
+                            <p class="faq-a">Only Python 3.10 or newer; there are no other dependencies. Clone the repository and run <code>python3 -m cmm run demo.cmm</code>, or use the <a href="/playground">online playground</a> without installing anything.</p>
+                        </details>
+                    </div>
+                </section>
+
+                <nav class="next-links" aria-label="Explore">
+                    <a class="link-card" href="/">
+                        <span class="link-card-label">Overview</span>
+                        <span class="link-card-value">What C-- is and why it exists</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/reference">
+                        <span class="link-card-label">Reference</span>
+                        <span class="link-card-value">C-- syntax with runnable examples</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    <a class="link-card" href="/pipeline">
+                        <span class="link-card-label">Internals</span>
+                        <span class="link-card-value">How the C-- compiler works</span>
+                        <span class="link-card-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                </nav>
+            </div>
+        </section>
