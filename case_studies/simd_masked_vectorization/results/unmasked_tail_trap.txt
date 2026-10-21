@@ -1,0 +1,13 @@
+unmasked.cmm:160:17: runtime error: index out of range (index 100, length 100)
+    |
+160 |         v[l] = a[base + l];   // UNMASKED load: ignores k2
+    |                 ^
+what went wrong:
+  You asked for position 100, but the array only has 100 items (valid
+  positions are 0 to 99). Positions start at 0 and cannot be negative.
+how to fix:
+  Check that your position is less than the collection length before
+  indexing.
+      if (i < items.len()) {
+            print(items[i]);
+      }

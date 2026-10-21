@@ -1,0 +1,70 @@
+N = 65537 floats (4096 zmm vectors + 1 tail lane); median of 15 interleaved trials, each the best of 20 runs
+Hardware counters: unavailable in this environment (TSC timing only)
+
+Correctness on IEEE corner cases (0, -0, NaN, +-inf, denormals):
+  compiler_avx512 bit-identical to scalar
+  avx512_masked   bit-identical to scalar
+  avx512_max      bit-identical to scalar
+  avx512vl_ymm    bit-identical to scalar
+  avx2_blend      bit-identical to scalar
+
+Dataset: random sign (50%)
+  kernel            TSC/elem  speedup result
+  scalar_branchy      13.760    1.00x ok
+  compiler_avx512      0.725   18.98x ok
+  avx512_masked        0.725   18.98x ok
+  avx512_max           0.725   18.98x ok
+  avx512vl_ymm         0.725   18.96x ok
+  avx2_blend           0.618   22.22x ok
+
+Dataset: 90% positive
+  kernel            TSC/elem  speedup result
+  scalar_branchy       4.406    1.00x ok
+  compiler_avx512      0.725    6.08x ok
+  avx512_masked        0.725    6.08x ok
+  avx512_max           0.725    6.08x ok
+  avx512vl_ymm         0.725    6.08x ok
+  avx2_blend           0.618    7.12x ok
+
+Dataset: all positive
+  kernel            TSC/elem  speedup result
+  scalar_branchy       2.471    1.00x ok
+  compiler_avx512      0.725    3.41x ok
+  avx512_masked        0.725    3.41x ok
+  avx512_max           0.725    3.41x ok
+  avx512vl_ymm         0.725    3.41x ok
+  avx2_blend           0.618    4.00x ok
+
+Dataset: alternating sign
+  kernel            TSC/elem  speedup result
+  scalar_branchy       3.974    1.00x ok
+  compiler_avx512      0.725    5.48x ok
+  avx512_masked        0.725    5.47x ok
+  avx512_max           0.725    5.41x ok
+  avx512vl_ymm         0.841    4.72x ok
+  avx2_blend           0.619    6.16x ok
+
+Dataset: sorted (neg then pos)
+  kernel            TSC/elem  speedup result
+  scalar_branchy       4.714    1.00x ok
+  compiler_avx512      0.726    5.68x ok
+  avx512_masked        0.725    5.77x ok
+  avx512_max           0.754    5.90x ok
+  avx512vl_ymm         0.725    6.26x ok
+  avx2_blend           0.735    6.39x ok
+
+Frequency-license experiment (256-bit masked kernel, TSC ticks/elem):
+  after 50 ms of scalar code only:      0.619
+  right after 30 ms of 512-bit vsqrtps (time since burst -> ticks/elem):
+     0.25 ms  0.770
+     0.50 ms  0.763
+     0.75 ms  0.760
+     1.00 ms  0.836
+     1.25 ms  0.647
+     1.50 ms  0.649
+     1.75 ms  0.649
+     2.00 ms  0.784
+     3.00 ms  0.665
+     4.00 ms  0.704
+     5.00 ms  0.658
+     6.00 ms  0.655

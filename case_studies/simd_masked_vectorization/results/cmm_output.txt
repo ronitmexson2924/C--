@@ -1,0 +1,196 @@
+C-- SIMD lab: masked vectorization of `if (A[i] > 0) B[i] = sqrt(A[i]); else B[i] = 0;`
+Model: 16-lane zmm registers, k1/k2 mask registers, two-level branch predictor,
+4-wide issue, 20-cycle mispredict penalty, sqrtss 3 / vsqrtps zmm 12 cycles throughput.
+------------------------------------------------------------
+Dataset 1: random sign (50% positive) - worst case for the predictor
+  elements / AVX-512 vectors (16 lanes) / tail lanes:
+100
+7
+4
+  verified: masked == scalar, max == scalar, blend == scalar, B = sqrt(A) or 0:
+true
+true
+true
+true
+  data-branch mispredicts: 2-bit counter / two-level history predictor (used below):
+52
+53
+  [scalar branchy] instructions / branches / mispredicts / est. cycles / cycles per element:
+800
+200
+54
+1280
+12.8
+  [AVX-512 masked k1/k2] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX-512 max-predicated] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX2 blend + scalar tail] instructions / branches / mispredicts / est. cycles / cycles per element:
+116
+20
+5
+175
+1.75
+  speedup of AVX-512 masked over scalar (estimated):
+12.307692307692308
+  share of scalar cycles lost to mispredicts:
+0.84375
+------------------------------------------------------------
+Dataset 2: 90% positive
+  elements / AVX-512 vectors (16 lanes) / tail lanes:
+100
+7
+4
+  verified: masked == scalar, max == scalar, blend == scalar, B = sqrt(A) or 0:
+true
+true
+true
+true
+  data-branch mispredicts: 2-bit counter / two-level history predictor (used below):
+10
+10
+  [scalar branchy] instructions / branches / mispredicts / est. cycles / cycles per element:
+800
+200
+11
+493
+4.93
+  [AVX-512 masked k1/k2] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX-512 max-predicated] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX2 blend + scalar tail] instructions / branches / mispredicts / est. cycles / cycles per element:
+116
+20
+2
+124
+1.24
+  speedup of AVX-512 masked over scalar (estimated):
+4.740384615384615
+  share of scalar cycles lost to mispredicts:
+0.4462474645030426
+------------------------------------------------------------
+Dataset 3: all positive (except A[0] = 0.0)
+  elements / AVX-512 vectors (16 lanes) / tail lanes:
+100
+7
+4
+  verified: masked == scalar, max == scalar, blend == scalar, B = sqrt(A) or 0:
+true
+true
+true
+true
+  data-branch mispredicts: 2-bit counter / two-level history predictor (used below):
+2
+2
+  [scalar branchy] instructions / branches / mispredicts / est. cycles / cycles per element:
+800
+200
+3
+357
+3.57
+  [AVX-512 masked k1/k2] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX-512 max-predicated] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX2 blend + scalar tail] instructions / branches / mispredicts / est. cycles / cycles per element:
+116
+20
+2
+124
+1.24
+  speedup of AVX-512 masked over scalar (estimated):
+3.4326923076923075
+  share of scalar cycles lost to mispredicts:
+0.16806722689075632
+------------------------------------------------------------
+Dataset 4: alternating sign
+  elements / AVX-512 vectors (16 lanes) / tail lanes:
+100
+7
+4
+  verified: masked == scalar, max == scalar, blend == scalar, B = sqrt(A) or 0:
+true
+true
+true
+true
+  data-branch mispredicts: 2-bit counter / two-level history predictor (used below):
+50
+4
+  [scalar branchy] instructions / branches / mispredicts / est. cycles / cycles per element:
+800
+200
+5
+300
+3.0
+  [AVX-512 masked k1/k2] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX-512 max-predicated] instructions / branches / mispredicts / est. cycles / cycles per element:
+46
+7
+1
+104
+1.04
+  [AVX2 blend + scalar tail] instructions / branches / mispredicts / est. cycles / cycles per element:
+116
+20
+4
+158
+1.58
+  speedup of AVX-512 masked over scalar (estimated):
+2.8846153846153846
+  share of scalar cycles lost to mispredicts:
+0.3333333333333333
+------------------------------------------------------------
+Lane trace: last vector of the random dataset (elements from index):
+96
+  k2 = tail mask as integer (bit i = lane i), active lanes:
+15
+4
+  k1 = (A > 0) AND k2 as integer, active lanes:
+2
+1
+  per valid lane: A[i], then B[i] = zmm2 lane:
+-61.17254489399026
+0.0
+58.68526411209721
+7.6606307907441415
+-5.34411190548446
+0.0
+-17.70606234482024
+0.0
+------------------------------------------------------------
+Scalar cycles across the four datasets (data-dependent), then AVX-512 masked (data-independent):
+1280
+493
+357
+300
+104
