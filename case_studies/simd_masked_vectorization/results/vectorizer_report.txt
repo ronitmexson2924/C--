@@ -1,0 +1,6 @@
+gcc -O3 -mavx512f -mprefer-vector-width=512:
+  packed sqrt instructions: 0
+gcc -O3 -mavx512f -mprefer-vector-width=512 -fno-math-errno:
+  /tmp/cmm-simd-build/kernel.c:3:23: optimized: loop vectorized using 64 byte vectors
+  /tmp/cmm-simd-build/kernel.c:3:23: optimized: loop vectorized using 32 byte vectors
+  packed sqrt instructions: 2

@@ -1,0 +1,533 @@
+module main;
+
+// ============================================================================
+// Case Study (Group 16): AVX-512 SIMD vectorization with conditional control flow
+//
+//     for (int i = 0; i < N; i++) {
+//         if (A[i] > 0.0f) B[i] = sqrtf(A[i]); else B[i] = 0.0f;
+//     }
+//
+// This C-- program is a "SIMD laboratory". C-- has no pointers and no inline
+// assembly, so registers are modelled as safe values:
+//   * a 512-bit zmm register  = array<float>(16)  (16 lanes of float32)
+//   * an AVX-512 mask k1..k7   = array<bool>(16)   (one predicate bit per lane)
+// Every vector instruction is a small pure function, so the program can
+//   1. run the loop four ways (scalar branchy, AVX-512 masked, AVX-512
+//      max-predicated, AVX2 compare+blend) and prove they agree lane by lane,
+//   2. simulate the branch predictor that the scalar version depends on,
+//   3. count dynamic instructions and estimate cycles for each strategy.
+//
+// Note: C-- floats are 64-bit; the lane count of 16 models float32 in a zmm.
+// Run with:  python3 -m cmm run case_studies/simd_masked_vectorization/masked_sqrt.cmm
+// ============================================================================
+
+// ---------------------------------------------------------------- machine model
+// Approximate Skylake-SP / Cascade Lake values (Agner Fog, uops.info); the
+// mispredict penalty is calibrated from bench_avx512.c (~19-23 TSC ticks measured).
+fn lanes512() -> int { return 16; }
+fn lanes256() -> int { return 8; }
+fn issue_width() -> int { return 4; }
+fn mispredict_penalty() -> int { return 20; }
+fn sqrtss_cost() -> int { return 3; }      // reciprocal throughput, scalar
+fn sqrtps_ymm_cost() -> int { return 6; }  // 8 lanes
+fn sqrtps_zmm_cost() -> int { return 12; } // 16 lanes
+
+// Dynamic instructions per loop iteration, counted from the real hot loops that
+// gcc 13 emits (see results/asm_*.s): loads fold into memory operands.
+fn scalar_iter_then() -> int { return 8; }  // movss, comiss, jbe, sqrtss, movss, add, cmp, jne
+fn scalar_iter_else() -> int { return 8; }  // movss, comiss, jbe, pxor, movss, add, cmp, je
+fn avx512_masked_iter() -> int { return 6; } // vcmpps [A]->k1, vsqrtps [A]{k1}{z}, vmovups, add, cmp, jne
+fn avx512_max_iter() -> int { return 6; }    // vmaxps [A], vsqrtps, vmovups, add, cmp, jne
+fn avx512_tail_setup() -> int { return 4; }  // mov, shl/bzhi, dec, kmovw -> k2 (once)
+fn avx2_blend_iter() -> int { return 7; }    // vsqrtps [A], vcmpltps [A], vandps, vmovups, add, cmp, jne
+
+// ---------------------------------------------------------------- utilities
+fn lcg(state: int) -> int {
+    // 31-bit linear congruential generator (fits in checked 64-bit arithmetic)
+    return (1103515245 * state + 12345) % 2147483648;
+}
+
+fn unit(state: int) -> float {
+    return (1.0 * state) / 2147483648.0;  // [0, 1)
+}
+
+// Newton-Raphson square root: the model of the hardware sqrt unit.
+// Starting at or above sqrt(x), the iteration decreases monotonically,
+// so it stops exactly when no further progress is possible.
+fn sqrt_nr(x: float) -> float {
+    if (x <= 0.0) {
+        return 0.0;
+    }
+    mut g = x;
+    if (g < 1.0) {
+        g = 1.0;
+    }
+    for (mut k = 0; k < 64; k = k + 1) {
+        let next = 0.5 * (g + x / g);
+        if (next >= g) {
+            return g;
+        }
+        g = next;
+    }
+    return g;
+}
+
+fn pow2(e: int) -> int {
+    mut p = 1;
+    for (mut i = 0; i < e; i = i + 1) {
+        p = p * 2;
+    }
+    return p;
+}
+
+// kmovw eax, k  -> the mask as an integer (bit i = lane i)
+fn mask_bits(k: array<bool>) -> int {
+    mut bits = 0;
+    for (mut l = 0; l < k.len(); l = l + 1) {
+        if (k[l]) {
+            bits = bits + pow2(l);
+        }
+    }
+    return bits;
+}
+
+fn popcnt(k: array<bool>) -> int {
+    mut c = 0;
+    for (mut l = 0; l < k.len(); l = l + 1) {
+        if (k[l]) {
+            c = c + 1;
+        }
+    }
+    return c;
+}
+
+// ---------------------------------------------------------------- datasets
+// pattern 1: random sign (50/50)   pattern 2: 90% positive
+// pattern 3: all positive          pattern 4: strictly alternating sign
+fn make_input(n: int, pattern: int, seed: int) -> array<float> {
+    mut a = array<float>(n, 0.0);
+    mut s = seed;
+    for (mut i = 0; i < n; i = i + 1) {
+        s = lcg(s);
+        let magnitude = 0.01 + unit(s) * 99.99;
+        s = lcg(s);
+        let r = unit(s);
+        mut positive = true;
+        if (pattern == 1) {
+            positive = r < 0.5;
+        } else if (pattern == 2) {
+            positive = r < 0.9;
+        } else if (pattern == 4) {
+            positive = i % 2 == 0;
+        }
+        if (positive) {
+            a[i] = magnitude;
+        } else {
+            a[i] = 0.0 - magnitude;
+        }
+    }
+    a[0] = 0.0;  // boundary case: 0.0 > 0.0 is false, so B[0] must be 0.0
+    return a;
+}
+
+// ---------------------------------------------------------------- kernel 1: scalar with a branch
+fn scalar_branchy(a: array<float>, n: int) -> array<float> {
+    mut b = array<float>(n, -1.0);
+    for (mut i = 0; i < n; i = i + 1) {
+        if (a[i] > 0.0) {
+            b[i] = sqrt_nr(a[i]);
+        } else {
+            b[i] = 0.0;
+        }
+    }
+    return b;
+}
+
+// ---------------------------------------------------------------- AVX-512 instruction models
+// Tail mask k2: lanes [0, valid) are active. Computed once for the last vector.
+fn make_tail_mask(valid: int) -> array<bool> {
+    mut k = array<bool>(lanes512(), false);
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        k[l] = l < valid;
+    }
+    return k;
+}
+
+// vmovups zmm1{k2}{z}, [A + base]  (masked load: no out-of-bounds access, inactive lanes = 0)
+fn vload_maskz(a: array<float>, base: int, k: array<bool>) -> array<float> {
+    mut v = array<float>(lanes512(), 0.0);
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        if (k[l]) {
+            v[l] = a[base + l];
+        }
+    }
+    return v;
+}
+
+// vcmpps k1{k2}, zmm1, zmm0, _CMP_GT_OQ   (zmm0 = 0.0; result ANDed with k2)
+fn vcmp_gt_zero(v: array<float>, k: array<bool>) -> array<bool> {
+    mut m = array<bool>(lanes512(), false);
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        m[l] = k[l] && v[l] > 0.0;
+    }
+    return m;
+}
+
+// vsqrtps zmm2{k1}{z}, zmm1   (zero-masking IS the else-branch: inactive lanes become 0.0)
+fn vsqrt_maskz(v: array<float>, k: array<bool>) -> array<float> {
+    mut r = array<float>(lanes512(), 0.0);
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        if (k[l]) {
+            r[l] = sqrt_nr(v[l]);
+        }
+    }
+    return r;
+}
+
+// vmaxps zmm1, zmm1, zmm0   (max(x, 0): negative and zero lanes collapse to 0.0)
+fn vmax_zero(v: array<float>) -> array<float> {
+    mut r = array<float>(lanes512(), 0.0);
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        if (v[l] > 0.0) {
+            r[l] = v[l];
+        }
+    }
+    return r;
+}
+
+// vsqrtps zmm2, zmm1   (unmasked)
+fn vsqrt(v: array<float>) -> array<float> {
+    mut r = array<float>(v.len(), 0.0);
+    for (mut l = 0; l < v.len(); l = l + 1) {
+        r[l] = sqrt_nr(v[l]);
+    }
+    return r;
+}
+
+// vmovups [B + base]{k2}, zmm2   (masked store; value semantics return the new B)
+fn vstore_mask(b: array<float>, base: int, v: array<float>, k: array<bool>) -> array<float> {
+    mut out = b;
+    for (mut l = 0; l < lanes512(); l = l + 1) {
+        if (k[l]) {
+            out[base + l] = v[l];
+        }
+    }
+    return out;
+}
+
+// ---------------------------------------------------------------- kernel 2: AVX-512 masked (k1/k2)
+fn avx512_masked(a: array<float>, n: int) -> array<float> {
+    mut b = array<float>(n, -1.0);
+    for (mut base = 0; base < n; base = base + lanes512()) {
+        mut valid = n - base;
+        if (valid > lanes512()) {
+            valid = lanes512();
+        }
+        let k2 = make_tail_mask(valid);
+        let zmm1 = vload_maskz(a, base, k2);
+        let k1 = vcmp_gt_zero(zmm1, k2);
+        let zmm2 = vsqrt_maskz(zmm1, k1);
+        b = vstore_mask(b, base, zmm2, k2);
+    }
+    return b;
+}
+
+// ---------------------------------------------------------------- kernel 3: AVX-512 algebraic predication
+// B = sqrt(max(A, 0)) is the same function as the branch: sqrt(0) = 0.
+// The condition disappears into arithmetic; only the tail needs a mask.
+fn avx512_max(a: array<float>, n: int) -> array<float> {
+    mut b = array<float>(n, -1.0);
+    for (mut base = 0; base < n; base = base + lanes512()) {
+        mut valid = n - base;
+        if (valid > lanes512()) {
+            valid = lanes512();
+        }
+        let k2 = make_tail_mask(valid);
+        let zmm1 = vload_maskz(a, base, k2);
+        let zmm2 = vsqrt(vmax_zero(zmm1));
+        b = vstore_mask(b, base, zmm2, k2);
+    }
+    return b;
+}
+
+// ---------------------------------------------------------------- kernel 4: AVX2 compare + blend (no mask registers)
+// vcmpltps ymm0 = (0 < A) as all-ones/all-zeros lanes; vsqrtps computes EVERY lane
+// (negative lanes produce NaN and raise the invalid flag); vandps (or vblendvps)
+// keeps sqrt where the lane is all-ones and yields 0.0 elsewhere.
+// The n % 8 remainder runs through a scalar epilogue, as compilers generate.
+fn avx2_blend(a: array<float>, n: int) -> array<float> {
+    mut b = array<float>(n, -1.0);
+    let full = n - n % lanes256();
+    for (mut base = 0; base < full; base = base + lanes256()) {
+        for (mut l = 0; l < lanes256(); l = l + 1) {
+            let x = a[base + l];
+            let select = x > 0.0;      // vcmpltps lane mask
+            let s = sqrt_nr(x);        // vsqrtps (NaN lanes modelled as discarded)
+            if (select) {              // vandps/vblendvps: per-lane select, no branch in hardware
+                b[base + l] = s;
+            } else {
+                b[base + l] = 0.0;
+            }
+        }
+    }
+    for (mut i = full; i < n; i = i + 1) {
+        if (a[i] > 0.0) {
+            b[i] = sqrt_nr(a[i]);
+        } else {
+            b[i] = 0.0;
+        }
+    }
+    return b;
+}
+
+// ---------------------------------------------------------------- verification
+fn same(x: array<float>, y: array<float>) -> bool {
+    if (x.len() != y.len()) {
+        return false;
+    }
+    for (mut i = 0; i < x.len(); i = i + 1) {
+        if (x[i] != y[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn semantics_hold(a: array<float>, b: array<float>) -> bool {
+    for (mut i = 0; i < a.len(); i = i + 1) {
+        if (a[i] > 0.0) {
+            let err = b[i] * b[i] - a[i];
+            if (err > 0.000000001 * a[i] || err < 0.0 - 0.000000001 * a[i]) {
+                return false;
+            }
+        } else if (b[i] != 0.0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------- branch predictors
+fn bump(counter: int, taken: bool) -> int {
+    if (taken && counter < 3) {
+        return counter + 1;
+    }
+    if (!taken && counter > 0) {
+        return counter - 1;
+    }
+    return counter;
+}
+
+// Textbook 2-bit saturating counter for the `if (A[i] > 0)` branch.
+fn mispredicts_2bit(a: array<float>, n: int) -> int {
+    mut counter = 2;
+    mut misses = 0;
+    for (mut i = 0; i < n; i = i + 1) {
+        let actual = a[i] > 0.0;
+        if ((counter >= 2) != actual) {
+            misses = misses + 1;
+        }
+        counter = bump(counter, actual);
+    }
+    return misses;
+}
+
+// Two-level local-history predictor (4 history bits -> 16 two-bit counters),
+// the family modern CPUs build on: it learns repeating patterns such as
+// alternating signs, but nothing can learn truly random data.
+fn mispredicts_two_level(a: array<float>, n: int) -> int {
+    mut pht = array<int>(16, 2);
+    mut history = 0;
+    mut misses = 0;
+    for (mut i = 0; i < n; i = i + 1) {
+        let actual = a[i] > 0.0;
+        if ((pht[history] >= 2) != actual) {
+            misses = misses + 1;
+        }
+        pht[history] = bump(pht[history], actual);
+        mut bit = 0;
+        if (actual) {
+            bit = 1;
+        }
+        history = (history * 2 + bit) % 16;
+    }
+    return misses;
+}
+
+// ---------------------------------------------------------------- cost models
+// Returns [instructions, data-branch mispredicts, loop mispredicts, sqrt ops, branches]
+fn scalar_cost(a: array<float>, n: int) -> array<int> {
+    mut instructions = 0;
+    mut sqrt_ops = 0;
+    for (mut i = 0; i < n; i = i + 1) {
+        if (a[i] > 0.0) {
+            instructions = instructions + scalar_iter_then();
+            sqrt_ops = sqrt_ops + 1;
+        } else {
+            instructions = instructions + scalar_iter_else();
+        }
+    }
+    return [instructions, mispredicts_two_level(a, n), 1, sqrt_ops, 2 * n];
+}
+
+fn vectors(n: int, width: int) -> int {
+    return (n + width - 1) / width;
+}
+
+// Returns [instructions, data-branch mispredicts, loop mispredicts, sqrt ops, branches]
+fn avx512_cost(n: int, iter: int) -> array<int> {
+    let v = vectors(n, lanes512());
+    mut setup = 0;
+    if (n % lanes512() != 0) {
+        setup = avx512_tail_setup();
+    }
+    return [v * iter + setup, 0, 1, v, v];
+}
+
+fn avx2_cost(a: array<float>, n: int) -> array<int> {
+    let full = n - n % lanes256();
+    let v = full / lanes256();
+    mut instructions = v * avx2_blend_iter();
+    mut mispredicts = 0;
+    mut branches = v;
+    mut counter = 2;
+    mut scalar_sqrt = 0;
+    for (mut i = full; i < n; i = i + 1) {
+        let actual = a[i] > 0.0;
+        if ((counter >= 2) != actual) {
+            mispredicts = mispredicts + 1;
+        }
+        if (actual) {
+            if (counter < 3) { counter = counter + 1; }
+            instructions = instructions + scalar_iter_then();
+            scalar_sqrt = scalar_sqrt + 1;
+        } else {
+            if (counter > 0) { counter = counter - 1; }
+            instructions = instructions + scalar_iter_else();
+        }
+        branches = branches + 2;
+    }
+    return [instructions, mispredicts, 2, v, branches, scalar_sqrt];
+}
+
+// cycles = max(front-end issue bound, sqrt-unit bound) + mispredicts * penalty
+fn cycles(instructions: int, sqrt_cycles: int, mispredicts: int) -> int {
+    mut issue = (instructions + issue_width() - 1) / issue_width();
+    if (sqrt_cycles > issue) {
+        issue = sqrt_cycles;
+    }
+    return issue + mispredicts * mispredict_penalty();
+}
+
+fn per_element(total: int, n: int) -> float {
+    return (1.0 * total) / n;
+}
+
+// ---------------------------------------------------------------- report
+fn report(name: string, n: int, pattern: int, seed: int) -> int {
+    let a = make_input(n, pattern, seed);
+    let ref = scalar_branchy(a, n);
+    let m512 = avx512_masked(a, n);
+    let x512 = avx512_max(a, n);
+    let b256 = avx2_blend(a, n);
+
+    print("------------------------------------------------------------");
+    print(name);
+    print("  elements / AVX-512 vectors (16 lanes) / tail lanes:");
+    print(n);
+    print(vectors(n, lanes512()));
+    print(n % lanes512());
+
+    print("  verified: masked == scalar, max == scalar, blend == scalar, B = sqrt(A) or 0:");
+    print(same(m512, ref));
+    print(same(x512, ref));
+    print(same(b256, ref));
+    print(semantics_hold(a, ref));
+
+    let sc = scalar_cost(a, n);
+    print("  data-branch mispredicts: 2-bit counter / two-level history predictor (used below):");
+    print(mispredicts_2bit(a, n));
+    print(sc[1]);
+    let mk = avx512_cost(n, avx512_masked_iter());
+    let mx = avx512_cost(n, avx512_max_iter());
+    let bl = avx2_cost(a, n);
+
+    let sc_cycles = cycles(sc[0], sc[3] * sqrtss_cost(), sc[1] + sc[2]);
+    let mk_cycles = cycles(mk[0], mk[3] * sqrtps_zmm_cost(), mk[1] + mk[2]);
+    let mx_cycles = cycles(mx[0], mx[3] * sqrtps_zmm_cost(), mx[1] + mx[2]);
+    let bl_cycles = cycles(bl[0], bl[3] * sqrtps_ymm_cost() + bl[5] * sqrtss_cost(), bl[1] + bl[2]);
+
+    print("  [scalar branchy] instructions / branches / mispredicts / est. cycles / cycles per element:");
+    print(sc[0]);
+    print(sc[4]);
+    print(sc[1] + sc[2]);
+    print(sc_cycles);
+    print(per_element(sc_cycles, n));
+    print("  [AVX-512 masked k1/k2] instructions / branches / mispredicts / est. cycles / cycles per element:");
+    print(mk[0]);
+    print(mk[4]);
+    print(mk[1] + mk[2]);
+    print(mk_cycles);
+    print(per_element(mk_cycles, n));
+    print("  [AVX-512 max-predicated] instructions / branches / mispredicts / est. cycles / cycles per element:");
+    print(mx[0]);
+    print(mx[4]);
+    print(mx[1] + mx[2]);
+    print(mx_cycles);
+    print(per_element(mx_cycles, n));
+    print("  [AVX2 blend + scalar tail] instructions / branches / mispredicts / est. cycles / cycles per element:");
+    print(bl[0]);
+    print(bl[4]);
+    print(bl[1] + bl[2]);
+    print(bl_cycles);
+    print(per_element(bl_cycles, n));
+    print("  speedup of AVX-512 masked over scalar (estimated):");
+    print((1.0 * sc_cycles) / mk_cycles);
+    print("  share of scalar cycles lost to mispredicts:");
+    print((1.0 * (sc[1] + sc[2]) * mispredict_penalty()) / sc_cycles);
+    return sc_cycles;
+}
+
+fn trace_tail(n: int, seed: int) -> int {
+    // Show the k2 (tail) and k1 (condition) masks for the last, partial vector.
+    let a = make_input(n, 1, seed);
+    let base = (n / lanes512()) * lanes512();
+    let k2 = make_tail_mask(n - base);
+    let zmm1 = vload_maskz(a, base, k2);
+    let k1 = vcmp_gt_zero(zmm1, k2);
+    let zmm2 = vsqrt_maskz(zmm1, k1);
+    print("------------------------------------------------------------");
+    print("Lane trace: last vector of the random dataset (elements from index):");
+    print(base);
+    print("  k2 = tail mask as integer (bit i = lane i), active lanes:");
+    print(mask_bits(k2));
+    print(popcnt(k2));
+    print("  k1 = (A > 0) AND k2 as integer, active lanes:");
+    print(mask_bits(k1));
+    print(popcnt(k1));
+    print("  per valid lane: A[i], then B[i] = zmm2 lane:");
+    for (mut l = 0; l < n - base; l = l + 1) {
+        print(zmm1[l]);
+        print(zmm2[l]);
+    }
+    return mask_bits(k1);
+}
+
+fn main() {
+    print("C-- SIMD lab: masked vectorization of `if (A[i] > 0) B[i] = sqrt(A[i]); else B[i] = 0;`");
+    print("Model: 16-lane zmm registers, k1/k2 mask registers, two-level branch predictor,");
+    print("4-wide issue, 20-cycle mispredict penalty, sqrtss 3 / vsqrtps zmm 12 cycles throughput.");
+    let n = 100;
+    let r1 = report("Dataset 1: random sign (50% positive) - worst case for the predictor", n, 1, 2024);
+    let r2 = report("Dataset 2: 90% positive", n, 2, 7);
+    let r3 = report("Dataset 3: all positive (except A[0] = 0.0)", n, 3, 11);
+    let r4 = report("Dataset 4: alternating sign", n, 4, 5);
+    let k = trace_tail(n, 2024);
+    print("------------------------------------------------------------");
+    print("Scalar cycles across the four datasets (data-dependent), then AVX-512 masked (data-independent):");
+    print(r1);
+    print(r2);
+    print(r3);
+    print(r4);
+    print(cycles(avx512_cost(n, avx512_masked_iter())[0], vectors(n, lanes512()) * sqrtps_zmm_cost(), 1));
+}
