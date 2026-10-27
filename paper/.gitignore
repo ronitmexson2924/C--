@@ -1,5 +1,6 @@
 # LaTeX build by-products (the deliverable is C--_IEEE_Paper.pdf)
 main.pdf
+report.pdf
 *.aux
 *.bbl
 *.blg

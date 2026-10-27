@@ -26,8 +26,12 @@ if [[ "${1:-}" == "--bench" || ! -f generated/bench_rows.tex ]]; then
   python3 bench/run_bench.py
 fi
 
-# 4. LaTeX
-latexmk -pdf -interaction=nonstopmode -halt-on-error -quiet main.tex > /dev/null
-cp main.pdf "C--_IEEE_Paper.pdf"
-latexmk -c -quiet main.tex > /dev/null 2>&1 || true
-echo "wrote paper/C--_IEEE_Paper.pdf"
+# 4. LaTeX: the conference paper and the full project report
+build_pdf() {
+  latexmk -pdf -interaction=nonstopmode -halt-on-error -quiet "$1.tex" > /dev/null
+  cp "$1.pdf" "$2"
+  latexmk -c -quiet "$1.tex" > /dev/null 2>&1 || true
+  echo "wrote paper/$2"
+}
+build_pdf main "C--_IEEE_Paper.pdf"
+build_pdf report "C--_IEEE_Project_Report.pdf"

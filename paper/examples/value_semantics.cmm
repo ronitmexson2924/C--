@@ -12,7 +12,7 @@ fn main() {
     mut samples = list<float>();
     samples.push(2.5);
     samples.push(4.0);
-    let snapshot = samples;   // deep copy, not an alias
+    let snapshot = samples;   // a deep copy
     samples.push(9.5);
     print(mean(samples));     // 5.333333333333333
     print(snapshot.len());    // 2
