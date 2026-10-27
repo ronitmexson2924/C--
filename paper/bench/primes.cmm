@@ -1,0 +1,25 @@
+module main;
+
+fn is_prime(n: int) -> bool {
+    if (n < 2) {
+        return false;
+    }
+    mut d = 2;
+    while (d * d <= n) {
+        if (n % d == 0) {
+            return false;
+        }
+        d += 1;
+    }
+    return true;
+}
+
+fn main() {
+    mut count = 0;
+    for (mut i = 2; i <= @N@; i = i + 1) {
+        if (is_prime(i)) {
+            count += 1;
+        }
+    }
+    print(count);
+}

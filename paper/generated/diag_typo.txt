@@ -1,0 +1,11 @@
+typo.cmm:5:19: semantic error: undeclared variable 'maximum_scor'
+  |
+5 |     mut current = maximum_scor + 10;
+  |                   ^^^^^^^^^^^^
+what went wrong:
+  'maximum_scor' has not been declared in this scope.
+how to fix:
+  Declare 'maximum_scor' before using it, with 'let maximum_scor = ...;' or
+  'mut maximum_scor = ...;'.
+      let maximum_scor = 0;
+  did you mean 'maximum_score'?

@@ -1,0 +1,7 @@
+module main;
+
+fn main() {
+    let maximum_score = 100;
+    mut current = maximum_scor + 10;
+    print(current);
+}

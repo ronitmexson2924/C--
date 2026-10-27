@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "python": "3.13.16",
+    "cc": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz"
+  },
+  "results": [
+    {
+      "name": "fib",
+      "label": "Recursive Fibonacci",
+      "n_small": 22,
+      "n_large": 35,
+      "interpreter_s": 0.37061935099995935,
+      "c99_small_s": 0.0016471800001909287,
+      "outputs_match_small": true,
+      "c99_checked_s": 0.04578222099985396,
+      "c_plain_s": 0.018182637000109025,
+      "outputs_match_large": true,
+      "output_small": "17711"
+    },
+    {
+      "name": "primes",
+      "label": "Prime counting (trial division)",
+      "n_small": 20000,
+      "n_large": 2000000,
+      "interpreter_s": 1.8915831939998498,
+      "c99_small_s": 0.003411573999983375,
+      "outputs_match_small": true,
+      "c99_checked_s": 0.9894003150000117,
+      "c_plain_s": 0.56592132999981,
+      "outputs_match_large": true,
+      "output_small": "2262"
+    },
+    {
+      "name": "collatz",
+      "label": "Collatz step totals",
+      "n_small": 3000,
+      "n_large": 1000000,
+      "interpreter_s": 1.4959890729999188,
+      "c99_small_s": 0.0017037439999967319,
+      "outputs_match_small": true,
+      "c99_checked_s": 0.2667683049999141,
+      "c_plain_s": 0.2064118350001536,
+      "outputs_match_large": true,
+      "output_small": "215063"
+    },
+    {
+      "name": "leibniz",
+      "label": "Leibniz series for $\\pi$ (float)",
+      "n_small": 200000,
+      "n_large": 200000000,
+      "interpreter_s": 1.4766418009999143,
+      "c99_small_s": 0.0020752349998929276,
+      "outputs_match_small": true,
+      "c99_checked_s": 0.6745337090001158,
+      "c_plain_s": 0.21301808299995173,
+      "outputs_match_large": true,
+      "output_small": "3.1415876535897618"
+    }
+  ]
+}

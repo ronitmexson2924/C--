@@ -1,0 +1,19 @@
+module main;
+
+fn mean(xs: list<float>) -> float {
+    mut total = 0.0;
+    for (mut i = 0; i < xs.len(); i = i + 1) {
+        total += xs[i];
+    }
+    return total / xs.len();
+}
+
+fn main() {
+    mut samples = list<float>();
+    samples.push(2.5);
+    samples.push(4.0);
+    let snapshot = samples;   // deep copy, not an alias
+    samples.push(9.5);
+    print(mean(samples));     // 5.333333333333333
+    print(snapshot.len());    // 2
+}
